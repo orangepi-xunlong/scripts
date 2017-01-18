@@ -227,11 +227,11 @@ else
     fi
 fi
 
-rm -r $odir/lib/modules/* > /dev/null 2>&1
-cp -rf $TOP/output/lib/modules $odir/lib > /dev/null 2>&1
-rm -r $odir/lib/firmware/* > /dev/null 2>&1
-cp -rf $TOP/output/lib/firmware $odir/lib > /dev/null 2>&1
-chown -R root:root $odir/lib/* > /dev/null 2>&1
+sudo rm -r $odir/lib/modules/* > /dev/null 2>&1
+sudo cp -rf $TOP/output/lib/modules $odir/lib > /dev/null 2>&1
+sudo rm -r $odir/lib/firmware/* > /dev/null 2>&1
+sudo cp -rf $TOP/output/lib/firmware $odir/lib > /dev/null 2>&1
+sudo chown -R root:root $odir/lib/* > /dev/null 2>&1
 
 # ================================================================================
 sync
@@ -272,7 +272,7 @@ echo ""
 echo "sync, please wait ..."
 sync
 
-cp -rf -d orange/lib/modules $odir/home/orangepi > /dev/null 2>&1
+cp -rf -d $TOP/output/lib/modules $odir/home/orangepi > /dev/null 2>&1
 
 # UMOUNT
 if [ ! "${_boot_on_ext4}" = "yes" ] ; then

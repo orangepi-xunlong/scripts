@@ -9,7 +9,7 @@ TOP="$PWD/.."
 if [ ! -d $TOP/output ]; then
 	mkdir -p $TOP/output
 fi
-export PATH="$TOP/toolchain/toolchain_tar/bin/":"$PATH"
+export PATH="$TOP/toolchain/toolchain_tar/bin":"$PATH"
 cross_comp="arm-linux-gnueabi"
 cd $TOP/output
 rm -rf $TOP/external/Legacy_patch/rootfs-lobo.img.gz > /dev/null 2>&1

@@ -6,8 +6,8 @@ if [ "${1}" = "" ]; then
 fi
 
 TOP="$PWD/.."
-export PATH="$TOP/toolchain/toolchain_tar/bin/":"$PATH"
-cross_comp="arm-linux-gnueabi"
+#export PATH="$TOP/toolchain/toolchain_tar/bin/":"$PATH"
+cross_comp="$TOP/toolchain/bin/arm-linux-gnueabi"
 
 cd $TOP/uboot
 if [ ${1} = "clean" ]; then
@@ -35,7 +35,7 @@ cd ..
 if [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}" = "lite" ] || [ "${1}" = "2" ] || [ "${1}" = "plus" ] || [ "${1}" = "plus2e" ]; then
 	make $CONFIG > /dev/null 2>&1
 	echo " Build u-boot..."
-	make -j4 ARCH=arm CROSS_COMPILE=${cross_comp}- > ../uboot_${1}.log 2>&1
+	make -j4 ARCH=arm CROSS_COMPILE=${cross_comp}-
 	if [ ! -d $TOP/output/ ]; then
 		mkdir -p $TOP/output
 	fi
