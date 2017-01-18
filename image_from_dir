@@ -30,8 +30,8 @@ if [ "${2}" = "" ]; then
     echo "USAGE: image_from_dir <directory> <img_name | /dev/sdX> [noformat] [2|pc|plus|one|lite|pcplus|plus2e]"
     exit 0
 fi
-sudo cp -rf $TOP/output/$1 ./ 
-sudo cp -rf $TOP/output/$5 ./
+#sudo cp -rf $TOP/output/$1 ./ 
+#sudo cp -rf $TOP/output/$5 ./
 idir=$1             
 
 if [ ! -d $idir ]; then
@@ -322,7 +322,7 @@ echo "SDCard image created."
 echo -e "*********************\033[37m"
 echo ""
 
-cp $sdcard $TOP/output/ -rf 
-rm -rf $sdcard*
+#cp $sdcard $TOP/output/ -rf 
+#rm -rf $sdcard*
 
 exit 0

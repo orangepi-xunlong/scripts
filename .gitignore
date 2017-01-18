@@ -120,6 +120,8 @@ zImage*
 Image
 OrangePi-BuildLinux/boot-trusty/
 OrangePi-BuildLinux/linux-trusty/
+linux-xenial/
+boot-xenial/
 *.img
 *.img1
 *.img2
