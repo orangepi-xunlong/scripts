@@ -128,3 +128,4 @@ OrangePi-BuildLinux/linux-trusty/
 update.sh
 download.sh
 vmlinux
+*.src

@@ -21,21 +21,22 @@ cd $_DIR
 # ===================================================
 if [ "${1}" = "" ]; then
     echo "Source directory not specified."
-    echo "USAGE: image_from_dir <directory> <img_name | /dev/sdX> [noformat] [opi-2|opi-PC|opi-plus|opi-one|opi-lite|opi-pcplus|opi-plus2e]"
+    echo "USAGE: image_from_dir <directory> <img_name | /dev/sdX> [noformat] [2|pc|plus|one|lite|pcplus|plus2e]"
     exit 0
 fi
 
 if [ "${2}" = "" ]; then
     echo "Destination not specified."
-    echo "USAGE: image_from_dir <directory> <img_name | /dev/sdX> [noformat] [opi-2|opi-PC|opi-plus|opi-one|opi-lite|opi-pcplus|opi-plus2e]"
+    echo "USAGE: image_from_dir <directory> <img_name | /dev/sdX> [noformat] [2|pc|plus|one|lite|pcplus|plus2e]"
     exit 0
 fi
-
-idir=$TOP/output/$1             
+sudo cp -rf $TOP/output/$1 ./ 
+sudo cp -rf $TOP/output/$5 ./
+idir=$1             
 
 if [ ! -d $idir ]; then
     echo "Source directory not found."
-    echo "USAGE: image_from_dir <directory> <img_name | /dev/sdX> [noformat] [opi-2|opi-PC|opi-plus|opi-one|opi-lite|opi-pcplus|opi-plus2e]"
+    echo "USAGE: image_from_dir <directory> <img_name | /dev/sdX> [noformat] [2|pc|plus|one|lite|pcplus|plus2e]"
     exit 0
 fi
 # ===================================================
@@ -45,11 +46,10 @@ fi
 # ********************************************************
 # Linux partition size IS CALCULATED from directory size *
 # ********************************************************
-_ext4size=`du -s $1 | awk '{print $1}'` 
+_ext4size=`du -s $1 | awk '{print $1}'`
 ext4sizeMB=$(expr $_ext4size / 1024)        
 ext4size=$(expr $ext4sizeMB / 2 + $ext4sizeMB) 
 linuxsize=$(expr $ext4sizeMB + 500)            
-
 _boot_on_ext4="no"
 
 
@@ -161,58 +161,58 @@ if [ "${3}" = "noinstallscr" ] || [ "${4}" = "noinstallscr" ] || [ "${5}" = "noi
     rm $odir/usr/local/bin/install_*_desktop > /dev/null 2>&1
 fi
 
-if [ "${3}" = "opi-2" ] || [ "${4}" = "opi-2" ]; then
-    cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
+if [ "${3}" = "2" ] || [ "${4}" = "2" ]; then
+    cp $TOP/output/uImage_* $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-2_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
-        cp $SCRIPT_DIR/orange/uImage_OPI-2 $bootdir/uImage > /dev/null 2>&1
+        cp $TOP/output/uImage_* $bootdir/uImage > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-2_720p60_hdmi $bootdir/script.bin > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-2_* $bootdir > /dev/null 2>&1
     fi
-elif [ "${3}" = "opi-pc" ] || [ "${4}" = "opi-pc" ]; then
-    cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
+elif [ "${3}" = "pc" ] || [ "${4}" = "pc" ]; then
+    cp $TOP/output/uImage_* $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-PC_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
-        cp $SCRIPT_DIR/orange/uImage_OPI-2 $bootdir/uImage > /dev/null 2>&1
+        cp $TOP/output/uImage_* $bootdir/uImage > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-PC_720p60_hdmi $bootdir/script.bin > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-PC_* $bootdir > /dev/null 2>&1
     fi
-elif [ "${3}" = "opi-plus" ] || [ "${4}" = "opi-plus" ]; then
-    cp $SCRIPT_DIR/orange/uImage_OPI-PLUS $odir/boot/uImage > /dev/null 2>&1
+elif [ "${3}" = "plus" ] || [ "${4}" = "plus" ]; then
+    cp $TOP/output/uImage_* $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-PLUS_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
-        cp $SCRIPT_DIR/orange/uImage_OPI-PLUS $bootdir/uImage > /dev/null 2>&1
+        cp $TOP/output/uImage_* $bootdir/uImage > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-PLUS_720p60_hdmi $bootdir/script.bin > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-PLUS_* $bootdir > /dev/null 2>&1
     fi
-elif [ "${3}" = "opi-one" ] || [ "${4}" = "opi-one" ]; then
-    cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
+elif [ "${3}" = "one" ] || [ "${4}" = "one" ]; then
+    cp $TOP/output/uImage_* $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-ONE_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
-        cp $SCRIPT_DIR/orange/uImage_OPI-2 $bootdir/uImage > /dev/null 2>&1
+        cp $TOP/output/uImage_* $bootdir/uImage > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-ONE_720p_hdmi $bootdir/script.bin > /dev/null 2>&1
     fi
-elif [ "${3}" = "opi-lite" ] || [ "${4}" = "opi-lite" ]; then
-    cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
+elif [ "${3}" = "lite" ] || [ "${4}" = "lite" ]; then
+    cp $TOP/output/uImage_* $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-LITE_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
-        cp $SCRIPT_DIR/orange/uImage_OPI-2 $bootdir/uImage > /dev/null 2>&1
+        cp $TOP/output/uImage_* $bootdir/uImage > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-LITE_720p_hdmi $bootdir/script.bin > /dev/null 2>&1
         sed -i '/8189es/c8189fs'  $odir/etc/modules 
     fi
-elif [ "${3}" = "opi-pcplus" ] || [ "${4}" = "opi-pcplus" ]; then
-    cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
+elif [ "${3}" = "pcplus" ] || [ "${4}" = "pcplus" ]; then
+    cp $TOP/output/uImage_* $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-PCPLUS_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
-        cp $SCRIPT_DIR/orange/uImage_OPI-2 $bootdir/uImage > /dev/null 2>&1
+        cp $TOP/output/uImage_* $bootdir/uImage > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-PCPLUS_720p_hdmi $bootdir/script.bin > /dev/null 2>&1
         sed -i '/8189es/c8189fs'  $odir/etc/modules 
     fi
-elif [ "${3}" = "opi-plus2e" ] || [ "${4}" = "opi-plus2e" ]; then
-    cp $SCRIPT_DIR/orange/uImage_OPI-PLUS $odir/boot/uImage > /dev/null 2>&1
+elif [ "${3}" = "plus2e" ] || [ "${4}" = "plus2e" ]; then
+    cp $TOP/output/uImage_* $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-PLUS2E_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
-        cp $SCRIPT_DIR/orange/uImage_OPI-PLUS $bootdir/uImage > /dev/null 2>&1
+        cp $TOP/output/uImage_* $bootdir/uImage > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-PLUS2E_720p_hdmi $bootdir/script.bin > /dev/null 2>&1
         sed -i '/8189es/c8189fs'  $odir/etc/modules 
     fi
@@ -220,8 +220,8 @@ else
     cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
-        cp $SCRIPT_DIR/orange/uImage_OPI-2 $bootdir/uImage > /dev/null 2>&1
-        cp $SCRIPT_DIR/orange/uImage_OPI* $bootdir > /dev/null 2>&1
+        cp $TOP/output/uImage_* $bootdir/uImage > /dev/null 2>&1
+        cp $TOP/output/uImage_* $bootdir > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-* $bootdir > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-2_720p60_hdmi $bootdir/script.bin > /dev/null 2>&1
     fi

@@ -6,21 +6,21 @@ if [ "${1}" = "" ]; then
 fi
 
 TOP="$PWD/.."
-export PATH="$TOP/toolchain/gcc-linaro/bin/":"$PATH"
+export PATH="$TOP/toolchain/toolchain_tar/bin/":"$PATH"
 cross_comp="arm-linux-gnueabi"
 
-cd $TOP/u-boot
+cd $TOP/uboot
 if [ ${1} = "clean" ]; then
 	echo " Clear u-boot ..."
-	rm -rf $TOP/uboot*.log > /dev/null 2>&1
-	rm -rf $TOP/output/* > /dev/null 2>&1
-	make distclean > /dev/null 2>&1
+	sudo rm -rf $TOP/uboot*.log > /dev/null 2>&1
+	sudo rm -rf $TOP/output/uboot
+	sudo make clean 
 	sleep 1
 	echo " Clear ok..."
 	exit -1
 fi
 
-cd $TOP/u-boot/configs
+cd $TOP/uboot/configs
 CONFIG="orangepi_${1}_defconfig"
 dts="sun8i-h3-orangepi-${1}.dtb"
 
@@ -39,9 +39,9 @@ if [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}" 
 	if [ ! -d $TOP/output/ ]; then
 		mkdir -p $TOP/output
 	fi
-	rm -rf $TOP/output/*
+	rm -rf $TOP/output/uboot/*
 	mkdir -p $TOP/output/uboot
-	cp $TOP/u-boot/u-boot-sunxi-with-spl.bin $TOP/output/uboot -rf 
+	cp $TOP/uboot/u-boot-sunxi-with-spl.bin $TOP/output/uboot -rf 
 	echo "*****compile uboot ok*****"
 
 	cp $TOP/external/Legacy_patch/uboot/orangepi.cmd $TOP/output/uboot/ -rf

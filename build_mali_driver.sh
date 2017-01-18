@@ -3,7 +3,7 @@
 echo "  Building mali drivers..."
 
 TOP="$PWD/.."
-export PATH="$TOP/toolchain/gcc-linaro/bin/":"$PATH"
+export PATH="$TOP/toolchain/toolchain_tar/bin/":"$PATH"
 cross_comp="arm-linux-gnueabi"
 
 SCRIPT_DIR=`pwd`
@@ -48,6 +48,8 @@ if [ $? -ne 0 ]; then
     echo "  Error: install."
     exit 1
 fi
+
+cp -rf $MOD_DIR/kernel/drivers/gpu/* $TOP/output/lib/modules/3.4.112/kernel/drivers/gpu/
 
 cd ..
 cd ..

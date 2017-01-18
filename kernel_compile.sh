@@ -9,7 +9,7 @@ TOP="$PWD/.."
 if [ ! -d $TOP/output ]; then
 	mkdir -p $TOP/output
 fi
-export PATH="$TOP/toolchain/gcc-linaro/bin/":"$PATH"
+export PATH="$TOP/toolchain/toolchain_tar/bin/":"$PATH"
 cross_comp="arm-linux-gnueabi"
 cd $TOP/output
 rm -rf $TOP/external/Legacy_patch/rootfs-lobo.img.gz > /dev/null 2>&1
@@ -23,9 +23,16 @@ gzip rootfs-lobo.img
 
 cd $TOP/kernel
 LINKERNEL_DIR=`pwd`
-rm -rf $TOP/output/* > /dev/null 2>&1
+rm -rf $TOP/output/lib > /dev/null 2>&1
 mkdir -p $TOP/output/lib > /dev/null 2>&1
-cp $TOP/external/Legacy_patch/rootfs-lobo.img.gz output/rootfs.cpio.gz
+cp $TOP/external/Legacy_patch/rootfs-lobo.img.gz $TOP/output/rootfs.cpio.gz
+rm -rf $TOP/kernel/output
+if [ ! -d $TOP/kernel/output ]; then
+	mkdir -p $TOP/kernel/output
+fi
+chmod +x $TOP/kernel/output
+rm -rf $TOP/kernel/output/*
+cp $TOP/output/rootfs.cpio.gz $TOP/kernel/output/
 #============================================================================================
 
 make_kernel() {

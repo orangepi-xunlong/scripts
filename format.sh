@@ -38,18 +38,18 @@ if [ ! "${image_name}" = "" ]; then
         # ========================================
         _directsd="no"
         _ddparm="conv=notrunc"
-        #odir="_linux_img_mnt"
-        #bootdir="_boot_img_mnt"
-        odir="$TOP/output/_linux_img_mnt"
-        bootdir="$TOP/output/_boot_img_mnt"
+        odir="_linux_img_mnt"
+        bootdir="_boot_img_mnt"
+        #odir="$TOP/output/_linux_img_mnt"
+        #bootdir="$TOP/output/_boot_img_mnt"
     fi
 else
     # === IN LOCAL DIRECTORY ===
     sdcard=""
-    #odir="linux-$distro"
-    #bootdir="boot-$distro"
-    odir="$TOP/output/linux-$distro"
-    bootdir="$TOP/output/boot-$distro"
+    odir="linux-$distro"
+    bootdir="boot-$distro"
+    #odir="$TOP/output/linux-$distro"
+    #bootdir="$TOP/output/boot-$distro"
     vfatuuid="6E35-5356"
     ext4uuid="e139ce78-9841-40fe-8823-96a304a09859"
     # ==========================
