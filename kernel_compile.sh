@@ -9,8 +9,8 @@ TOP="$PWD/.."
 if [ ! -d $TOP/output ]; then
 	mkdir -p $TOP/output
 fi
-export PATH="$TOP/toolchain/toolchain_tar/bin":"$PATH"
-cross_comp="arm-linux-gnueabi"
+#export PATH="$TOP/toolchain/toolchain_tar/bin":"$PATH"
+cross_comp="$TOP/toolchain/bin/arm-linux-gnueabi"
 cd $TOP/output
 rm -rf $TOP/external/Legacy_patch/rootfs-lobo.img.gz > /dev/null 2>&1
 cd $TOP/external/Legacy_patch/rootfs-test1
@@ -65,7 +65,7 @@ sleep 1
 # build kernel (use -jN, where N is number of cores you can spare for building)
 
 echo " Building kernel & modules ..."
-make -j6 ARCH=arm CROSS_COMPILE=${cross_comp}- uImage modules >> ../kbuild_${1}.log 2>&1
+make -j6 ARCH=arm CROSS_COMPILE=${cross_comp}- uImage modules 
 if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
 	echo " Error: kernel not built."
 	exit 1
@@ -77,12 +77,12 @@ sleep 1
 
 echo " Exporting modules ..."
 rm -rf $TOP/output/lib/* 
-make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output modules_install >> ../kbuild_${1}.log 2>&1
+make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output modules_install 
 if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
 	echo " Error."
 fi
 echo " Exporting firmware ..."
-make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output firmware_install >> ../kbuild_${1}.log 2>&1
+make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output firmware_install 
 if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
 	echo " Error."
 fi
