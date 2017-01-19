@@ -122,6 +122,8 @@ OrangePi-BuildLinux/boot-trusty/
 OrangePi-BuildLinux/linux-trusty/
 linux-xenial/
 boot-xenial/
+boot-jessie/
+linux-jessie/
 *.img
 *.img1
 *.img2
