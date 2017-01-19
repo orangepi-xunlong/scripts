@@ -140,9 +140,9 @@ touch $odir/_$distro
 
 echo "DEBOOTSTRAP, FIRST STAGE"
 if [ "${raspbian}" = "yes" ] ; then
-  debootstrap --arch armhf --foreign --no-check-gpg --include=ca-certificates --verbose --include=wget ${distro} $odir $repo > /dev/null 2>&1 &
+  debootstrap --arch armhf --foreign --no-check-gpg --include=ca-certificates --verbose --include=wget ${distro} $odir $repo &
 else
-  debootstrap --arch armhf --foreign --verbose --variant=minbase --include=wget ${distro} $odir $repo > /dev/null 2>&1 &
+  debootstrap --arch armhf --foreign --verbose --variant=minbase --include=wget ${distro} $odir $repo &
 fi
 pid=$!
 proc_wait $pid "please wait"

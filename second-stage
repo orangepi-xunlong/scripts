@@ -165,8 +165,8 @@ rm /etc/init/tty5.conf > /dev/null 2>&1
 rm /etc/init/tty6.conf > /dev/null 2>&1
 else
     echo "S0:23:respawn:/sbin/getty -L ttyS0 115200 vt102" >> /etc/inittab
-    ln -sf /usr/lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@tty2.service >> $_LOGFILE 2>&1
-    ln -sf /usr/lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@tty2.service >> $_LOGFILE 2>&1
+    ln -sf /usr/lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@tty2.service 
+    ln -sf /usr/lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@tty2.service 
 fi
 
 # Set console Fixed font
@@ -227,7 +227,7 @@ fi
 
 
 echo "DEBOOTSTRAP, SECOND-STAGE"
-/debootstrap/debootstrap --second-stage >> $_LOGFILE &
+/debootstrap/debootstrap --second-stage  &
 pid=$! # Process Id of the previous running command
 sleep 0.2
 echo -e "\033[1A\033[K"
@@ -243,7 +243,7 @@ fi
 echo "DEBOOTSTRAP, SECOND-STAGE FINISHED."
 sleep 1
 
-_apt="-y -q"
+_apt="-y"
 
 mv /sources.list /etc/apt/sources.list
 echo "LANG=\"$LANG\"" > /etc/default/locale
@@ -274,13 +274,13 @@ fi
 
 echo "======================="
 echo "Updating & upgrading..."
-apt-get ${_apt} update >> $_LOGFILE 2>&1 &
+apt-get ${_apt} update  &
 pid=$!
 proc_wait $pid "please wait"
-apt-get ${_apt} upgrade >> $_LOGFILE 2>&1 &
+apt-get ${_apt} upgrade  &
 pid=$!
 proc_wait $pid "please wait"
-apt-get clean >> $_LOGFILE 2>&1
+apt-get clean 
 
 # ============================================
 # prevent services from starting automatically
@@ -294,10 +294,10 @@ chmod 0755 /usr/sbin/policy-rc.d
 #---------------------------------------------
 
 echo "Installing essential packages..."
-apt-get ${_apt} install lsb-release >> $_LOGFILE 2>&1 &
+apt-get ${_apt} install lsb-release  &
 pid=$!
 proc_wait $pid "please be patient"
-apt-get clean >> $_LOGFILE 2>&1
+apt-get clean 
 
 
 _DST=`lsb_release -si`
@@ -322,41 +322,41 @@ echo ""
 
 if [ "${ONLY_BASE}" = "yes" ] ; then
     echo "Installing base packages..."
-    apt-get ${_apt} install sudo isc-dhcp-client netbase ifupdown iproute network-manager --no-install-recommends >> $_LOGFILE 2>&1 &
+    apt-get ${_apt} install sudo isc-dhcp-client netbase ifupdown iproute network-manager --no-install-recommends  &
     pid=$!
     proc_wait $pid "please be patient"
-    apt-get clean >> $_LOGFILE 2>&1
+    apt-get clean 
     
 else
     echo "Installing base packages..."
-    apt-get ${_apt} install udev apt-utils locales dialog sudo isc-dhcp-client netbase ifupdown iproute openssh-server iputils-ping wget curl ntpdate ntp less tzdata console-common module-init-tools u-boot-tools initramfs-tools keyboard-configuration console-setup xz-utils fbset --no-install-recommends >> $_LOGFILE 2>&1 &
+    apt-get ${_apt} install udev apt-utils locales dialog sudo isc-dhcp-client netbase ifupdown iproute openssh-server iputils-ping wget curl ntpdate ntp less tzdata console-common module-init-tools u-boot-tools initramfs-tools keyboard-configuration console-setup xz-utils fbset --no-install-recommends  &
     pid=$!
     proc_wait $pid "please be patient"
-    apt-get clean >> $_LOGFILE 2>&1
+    apt-get clean 
 
     # ** INSTALL base language pack for your language
     if [ "${_DST}" = "Ubuntu" ] ; then
 	echo "Installing language pack..."
-	apt-get ${_apt} install language-pack-$LANGUAGE-base --no-install-recommends >> $_LOGFILE 2>&1 &
+	apt-get ${_apt} install language-pack-$LANGUAGE-base --no-install-recommends  &
 	pid=$!
 	proc_wait $pid "please wait"
-	apt-get clean >> $_LOGFILE 2>&1
+	apt-get clean 
     else
 	cat /etc/locale.gen | sed s/"# $LANG"/"$LANG"/g > /tmp/locale.gen
 	mv /tmp/locale.gen /etc/locale.gen
-	locale-gen >> $_LOGFILE 2>&1
+	locale-gen 
     fi
 
     # ** INSTALL more usefull packages ....
     # apt-get -y install wireless-tools wpasupplicant axel build-essential git whiptail unzip
     echo "Installing more packages..."
-    apt-get ${_apt} install nano mc htop man-db tmux dbus btrfs-tools net-tools ethtool uuid iw lshw network-manager rsync usbutils hdparm i2c-tools parted dosfstools --no-install-recommends >> $_LOGFILE 2>&1 &
+    apt-get ${_apt} install nano mc htop man-db tmux dbus btrfs-tools net-tools ethtool uuid iw lshw network-manager rsync usbutils hdparm i2c-tools parted dosfstools --no-install-recommends  &
     pid=$!
     proc_wait $pid "please wait"
-    apt-get clean >> $_LOGFILE 2>&1
+    apt-get clean 
 fi
 
-rm -Rf /boot/* >> $_LOGFILE 2>&1
+rm -Rf /boot/* 
 
 if ! [ "${ONLY_BASE}" = "yes" ] ; then
     # ** CONFIGURE time zone, keyboard layout, console ...
@@ -364,19 +364,19 @@ if ! [ "${ONLY_BASE}" = "yes" ] ; then
     if [ ! "${_timezone}" = "" ] ; then
 	echo $_timezone > /etc/timezone
     fi
-    echo "*** LOCALE ***" >> $_LOGFILE 2>&1
-    locale-gen $LANG >> $_LOGFILE 2>&1
-    echo "*** TZDATA ***" >> $_LOGFILE 2>&1
-    dpkg-reconfigure tzdata >> $_LOGFILE 2>&1
-    echo "*** KEYBOARD ***" >> $_LOGFILE 2>&1
-    dpkg-reconfigure keyboard-configuration >> $_LOGFILE 2>&1
-    echo "*** LOCALES ***" >> $_LOGFILE 2>&1
-    dpkg-reconfigure locales >> $_LOGFILE 2>&1
-    echo "*** CONSOLE ***" >> $_LOGFILE 2>&1
-    dpkg-reconfigure console-setup >> $_LOGFILE 2>&1
+    echo "*** LOCALE ***" 
+    locale-gen $LANG 
+    echo "*** TZDATA ***" 
+    dpkg-reconfigure tzdata 
+    echo "*** KEYBOARD ***" 
+    dpkg-reconfigure keyboard-configuration 
+    echo "*** LOCALES ***" 
+    dpkg-reconfigure locales 
+    echo "*** CONSOLE ***" 
+    dpkg-reconfigure console-setup
 fi
 
-echo "*** USER/PASSWORD ***" >> $_LOGFILE 2>&1
+echo "*** USER/PASSWORD ***" 
 # ** CREATE root password
 echo "CREATING root PASSWORD..."
 #passwd
@@ -387,10 +387,10 @@ echo "ADDING USER..."
 # set default shell to /bin/bash
 cat /etc/default/useradd | sed s/"SHELL=\/bin\/sh"/"SHELL=\/bin\/bash"/g > /tmp/useradd
 mv /tmp/useradd /etc/default/useradd
-useradd -m -s "/bin/bash" $USER >> $_LOGFILE 2>&1
+useradd -m -s "/bin/bash" $USER 
 echo $USER:$USERPASS | chpasswd
-usermod -c $USER $USER >> $_LOGFILE 2>&1
-adduser $USER sudo >> $_LOGFILE 2>&1
+usermod -c $USER $USER 
+adduser $USER sudo 
 
 if ! [ "${ONLY_BASE}" = "yes" ] ; then
     # ** Tricks
