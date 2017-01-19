@@ -30,8 +30,10 @@ if [ "${2}" = "" ]; then
     echo "USAGE: image_from_dir <directory> <img_name | /dev/sdX> [noformat] [2|pc|plus|one|lite|pcplus|plus2e]"
     exit 0
 fi
-#sudo cp -rf $TOP/output/$1 ./ 
-#sudo cp -rf $TOP/output/$5 ./
+if [ ! -d "${1}" ] || [ ! -d  "${5}" ]; then
+	sudo cp -rf $TOP/output/$1 ./ 
+	sudo cp -rf $TOP/output/$5 ./
+fi
 idir=$1             
 
 if [ ! -d $idir ]; then
@@ -273,7 +275,7 @@ echo "sync, please wait ..."
 sync
 
 cp -rf -d $TOP/output/lib/modules $odir/home/orangepi > /dev/null 2>&1
-
+sudo chown root:root $odir/usr/bin/sudo && chmod 4755 $odir/usr/bin/sudo
 # UMOUNT
 if [ ! "${_boot_on_ext4}" = "yes" ] ; then
   if ! umount $bootdir; then
@@ -322,7 +324,9 @@ echo "SDCard image created."
 echo -e "*********************\033[37m"
 echo ""
 
-#cp $sdcard $TOP/output/ -rf 
-#rm -rf $sdcard*
+rm -rf $TOP/*.img
+cp $sdcard $TOP/output/ -rf 
+rm -rf $sdcard*
+rm -rf $1 $5
 
 exit 0

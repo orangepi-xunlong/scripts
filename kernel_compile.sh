@@ -9,6 +9,11 @@ TOP="$PWD/.."
 if [ ! -d $TOP/output ]; then
 	mkdir -p $TOP/output
 fi
+
+###
+BUILD_KERNEL=$2
+BUILD_MODULE=$3
+
 #export PATH="$TOP/toolchain/toolchain_tar/bin":"$PATH"
 cross_comp="$TOP/toolchain/bin/arm-linux-gnueabi"
 cd $TOP/output
@@ -47,57 +52,70 @@ elif [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}
 fi
 
 #===========================================================================================
+clear
 
 if [ "${2}" = "clean" ]; then
 	make ARCH=arm CROSS_COMPILE=${cross_comp}- mrproper > /dev/null 2>&1
 fi
 sleep 1
-echo "Building kernel for OPI-${1} ..."
-echo "  Configuring ..."
-make ARCH=arm CROSS_COMPILE=${cross_comp}- sun8iw7p1smp_linux_defconfig > ../kbuild_${1}.log 2>&1
+echo -e "\e[1;31m Building kernel for OrangePi-${1} ...\e[0m"
+if [ ! -f $TOP/kernel/.config ]; then
+    echo -e "\e[1;31m Configuring ... \e[0m"
+	make ARCH=arm CROSS_COMPILE=${cross_comp}- mrproper > /dev/null 2>&1
+    make ARCH=arm CROSS_COMPILE=${cross_comp}- sun8iw7p1smp_linux_defconfig 
+fi
 if [ $? -ne 0 ]; then
 	echo " Error: Kernel not built."
 	exit 1
 fi
 sleep 1
 
-#==============================================================================================
+#===================================================================================
 # build kernel (use -jN, where N is number of cores you can spare for building)
 
-echo " Building kernel & modules ..."
-make -j6 ARCH=arm CROSS_COMPILE=${cross_comp}- uImage modules 
-if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
-	echo " Error: kernel not built."
-	exit 1
-fi
-sleep 1
-
-#===============================================================================================
-# export modules to output
-
-echo " Exporting modules ..."
-rm -rf $TOP/output/lib/* 
-make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output modules_install 
-if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
-	echo " Error."
-fi
-echo " Exporting firmware ..."
-make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output firmware_install 
-if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
-	echo " Error."
-fi
-sleep 1
-
-#=========================================================================================
-# copy uImage to output
-cp arch/arm/boot/uImage $TOP/output/uImage_${1}
-
-# build mali driver
-cd $TOP/scripts
-if [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}" = "lite" ] || [ "${1}" = "2" ] || [ "${1}" = "plus" ] || [ "${1}" = "plus2e" ]; then
-	./build_mali_driver.sh
+if [ $BUILD_KERNEL = "1" ]; then
+    echo -e "\e[1;31m Building Kernel and Modules \e[0m"
+    make -j6 ARCH=arm CROSS_COMPILE=${cross_comp}- uImage
+    if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
+            echo " Error: kernel not built."
+            exit 1
+    fi
+    #==================================================
+    # copy uImage to output
+    cp arch/arm/boot/uImage $TOP/output/uImage_${1}
 fi
 
+if [ $BUILD_MODULE = "1" ]; then
+    make -j6 ARCH=arm CROSS_COMPILE=${cross_comp}- modules 
+
+    sleep 1
+
+    #====================================================
+    # export modules to output
+
+    echo -e "\e[1;31m Exporting Modules \e[0m"
+    rm -rf $TOP/output/lib/* 
+    make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output modules_install 
+    if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
+	    echo " Error."
+    fi
+    echo -e "\e[1;31m Exporting Firmware ... \e[0m"
+    make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output firmware_install 
+    if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
+	    echo " Error."
+    fi
+    sleep 1
+
+    # build mali driver
+    if [ -f $TOP/kernel/localversion-rt ]; then
+        rm $TOP/kernel/localversion-rt
+    fi
+    cd $TOP/scripts
+    if [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}" = "lite" ] || [ "${1}" = "2" ] || [ "${1}" = "plus" ] || [ "${1}" = "plus2e" ]; then
+	    ./build_mali_driver.sh
+    fi
+
+fi
 }
 #==========================================================================================
 
@@ -120,6 +138,16 @@ fi
 
 echo "******OK*****"
 
+clear
+cd $TOP/output/
+LPATH="`pwd`"
+cd -
+
+whiptail --title "OrangePi Build System" --msgbox \
+ "`figlet OrangePi` Succeed to build Linux!            Path:$LPATH" \
+            15 50 0
+
+clear
 
 
 
