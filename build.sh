@@ -164,7 +164,7 @@ fi
 if [ ! -f $ROOT/output/.tmp_toolchain ]; then
 	cd $SCRIPTS
 	sudo ./Prepare_toolchain.sh
-	touch $ROOT/output/.tmp_toolchain
+	sudo touch $ROOT/output/.tmp_toolchain
 	cd -
 fi
 
