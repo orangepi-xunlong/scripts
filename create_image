@@ -15,8 +15,7 @@ if [ -z $TOP ]; then
 	TOP=`cd .. && pwd`
 fi
 SCRIPT_DIR="$TOP/external/Legacy_patch/"
-echo $SCRIPT_DIR
-exit 1
+
 echo ""
 date
 echo -e "\033[36m======================================================="
