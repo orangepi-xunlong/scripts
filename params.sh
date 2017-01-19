@@ -106,7 +106,7 @@ elif [ $DISTRO = "4" ]; then
     distro="wily"
     repo="http://ports.ubuntu.com/ubuntu-ports"
 elif [ $DISTRO = "5" ]; then
-    distro="Xenial"
+    distro="xenial"
     repo="http://ports.ubuntu.com/ubuntu-ports"
 # === Debian ===
 elif [ $DISTRO = "6" ]; then
