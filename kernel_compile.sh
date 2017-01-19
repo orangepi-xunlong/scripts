@@ -5,7 +5,9 @@ if [ "${1}" = "" ]; then
 	exit 0
 fi
 
-TOP="$PWD/.."
+if [ -z $TOP ]; then
+	TOP=`cd .. && pwd`
+fi
 if [ ! -d $TOP/output ]; then
 	mkdir -p $TOP/output
 fi

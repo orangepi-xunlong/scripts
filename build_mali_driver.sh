@@ -2,7 +2,9 @@
 
 echo "  Building mali drivers..."
 
-TOP="$PWD/.."
+if [ -z $TOP ]; then
+	TOP=`cd .. && pwd`
+fi
 #export PATH="$TOP/toolchain/toolchain_tar/bin/":"$PATH"
 cross_comp="$TOP/toolchain/bin/arm-linux-gnueabi"
 

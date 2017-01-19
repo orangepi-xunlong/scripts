@@ -1,6 +1,8 @@
 #!/bin/bash
 
-TOP="$PWD/.."
+if [ -z $TOP ]; then
+	TOP=`cd .. && pwd`
+fi
 
 if [ "${_format}" = "btrfs" ]; then
     # WE MUST USE FAT PARTITION TO BOOT IF BTRFS IS USED
@@ -46,10 +48,10 @@ if [ ! "${image_name}" = "" ]; then
 else
     # === IN LOCAL DIRECTORY ===
     sdcard=""
-    odir="linux-$distro"
-    bootdir="boot-$distro"
-    #odir="$TOP/output/linux-$distro"
-    #bootdir="$TOP/output/boot-$distro"
+    #odir="linux-$distro"
+    #bootdir="boot-$distro"
+    odir="$TOP/output/linux-$distro"
+    bootdir="$TOP/output/boot-$distro"
     vfatuuid="6E35-5356"
     ext4uuid="e139ce78-9841-40fe-8823-96a304a09859"
     # ==========================

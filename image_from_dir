@@ -5,7 +5,9 @@ if [ "$(id -u)" != "0" ]; then
    exit 0
 fi
 
-TOP="$PWD/.."
+if [ -z $TOP ]; then
+	TOP=`cd .. && pwd`
+fi
 SCRIPT_DIR="$TOP/external/Legacy_patch/"
 
 echo ""

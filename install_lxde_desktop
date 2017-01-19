@@ -69,9 +69,11 @@ if [ "${_DST}" = "Ubuntu" ] ; then
 else
     apt-get $_auto install iceweasel gvfs-fuse gvfs-backends network-manager-gnome --no-install-recommends >> $logfile
 fi
-#apt-get $_auto install x2goserver >> $logfile
 apt-get clean
 
+if [ "${1}" = "lubuntu" ] && [ "${_DST}" = "Ubuntu" ]; then
+    apt-get $_auto install lubuntu-core gnome-system-monitor --no-install-recommends >> $logfile
+fi
 
 # === Configuration ===============================================================================================================================================================
 echo ""

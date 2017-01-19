@@ -5,8 +5,10 @@ if [ "${1}" = "" ]; then
 	exit -1
 fi
 
-TOP="$PWD/.."
 #export PATH="$TOP/toolchain/toolchain_tar/bin/":"$PATH"
+if [ -z $TOP ]; then
+	TOP=`cd .. && pwd`
+fi
 cross_comp="$TOP/toolchain/bin/arm-linux-gnueabi"
 
 clear
