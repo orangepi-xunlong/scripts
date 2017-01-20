@@ -9,7 +9,7 @@ if [ "$(id -u)" != "0" ]; then
    echo "Script must be run as root !"
    exit 0
 fi
-
+#if false; then
 
 if [ -z $TOP ]; then
 	TOP=`cd .. && pwd`
@@ -159,7 +159,7 @@ fi
 # ***************************
 echo "Creating \"sources.list\""
 case ${distro} in
-trusty|utopic|precise|vivid|wily*)
+trusty|utopic|precise|vivid|wily*|xenial)
 cat > $odir/sources.list << _EOF_
 deb $repo/ $distro main restricted universe multiverse
 deb-src $repo/ $distro main restricted universe multiverse
@@ -205,15 +205,13 @@ if [ ! "${_boot_on_ext4}" = "yes" ] ; then
 fi
 mkdir -p $odir/usr/local/bin
 mkdir -p $odir/usr/bin > /dev/null 2>&1
-
 cp /etc/timezone $odir/etc
 cp /usr/bin/qemu-arm-static $odir/usr/bin
 cp second-stage $odir/second-stage
-cp params.sh $odir/params.sh
+cp params2.sh $odir/params.sh
 if [ ! "${ONLY_BASE}" = "yes" ] ; then
     cp wallpaper.png $odir/ > /dev/null 2>&1
 fi
-
 # =====================================================================================
 # Execute debootstram second stage and install base system
 # =====================================================================================
@@ -267,7 +265,7 @@ cp install_* $odir/usr/local/bin > /dev/null 2>&1
 cp fs_resize $odir/usr/local/bin > /dev/null 2>&1
 
 
-if [ "${3}" = "opi-2" ] || [ "${4}" = "opi-2" ]; then
+if [ "${2}" = "2" ]; then
     cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-2_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
@@ -275,7 +273,7 @@ if [ "${3}" = "opi-2" ] || [ "${4}" = "opi-2" ]; then
         cp orange/script.bin.OPI-2_720p60_hdmi $bootdir/script.bin > /dev/null 2>&1
         cp orange/script.bin.OPI-2_* $bootdir > /dev/null 2>&1
     fi
-elif [ "${3}" = "opi-pc" ] || [ "${4}" = "opi-pc" ]; then
+elif [ "${2}" = "pc" ]; then
     cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-PC_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
@@ -283,7 +281,7 @@ elif [ "${3}" = "opi-pc" ] || [ "${4}" = "opi-pc" ]; then
         cp $SCRIPT_DIR/orange/script.bin.OPI-PC_720p60_hdmi $bootdir/script.bin > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-PC_* $bootdir > /dev/null 2>&1
     fi
-elif [ "${3}" = "opi-plus" ] || [ "${4}" = "opi-plus" ]; then
+elif [ "${2}" = "plus" ]; then
     cp $SCRIPT_DIR/orange/uImage_OPI-PLUS $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-PLUS_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
@@ -291,14 +289,14 @@ elif [ "${3}" = "opi-plus" ] || [ "${4}" = "opi-plus" ]; then
         cp $SCRIPT_DIR/orange/script.bin.OPI-PLUS_720p60_hdmi $bootdir/script.bin > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-PLUS_* $bootdir > /dev/null 2>&1
     fi
-elif [ "${3}" = "opi-one" ] || [ "${4}" = "opi-one" ]; then
+elif [ "${2}" = "one" ]; then
     cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-ONE_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
         cp $SCRIPT_DIR/orange/uImage_OPI-2 $bootdir/uImage > /dev/null 2>&1
         cp $SCRIPT_DIR/orange/script.bin.OPI-ONE_720p_hdmi $bootdir/script.bin > /dev/null 2>&1
     fi
-elif [ "${3}" = "opi-lite" ] || [ "${4}" = "opi-lite" ]; then
+elif [ "${2}" = "lite" ]; then
     cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-LITE_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
@@ -306,7 +304,7 @@ elif [ "${3}" = "opi-lite" ] || [ "${4}" = "opi-lite" ]; then
         cp $SCRIPT_DIR/orange/script.bin.OPI-LITE_720p_hdmi $bootdir/script.bin > /dev/null 2>&1
         sed -i '/8189es/c8189fs'  $odir/etc/modules
     fi
-elif [ "${3}" = "opi-pcplus" ] || [ "${4}" = "opi-pcplus" ]; then
+elif [ "${2}" = "pcplus" ]; then
     cp $SCRIPT_DIR/orange/uImage_OPI-2 $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-PCPLUS_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
@@ -314,7 +312,7 @@ elif [ "${3}" = "opi-pcplus" ] || [ "${4}" = "opi-pcplus" ]; then
         cp $SCRIPT_DIR/orange/script.bin.OPI-PCPLUS_720p_hdmi $bootdir/script.bin > /dev/null 2>&1
         sed -i '/8189es/c8189fs'  $odir/etc/modules
     fi
-elif [ "${3}" = "opi-plus2e" ] || [ "${4}" = "opi-plus2e" ]; then
+elif [ "${2}" = "plus2e" ]; then
     cp $SCRIPT_DIR/orange/uImage_OPI-PLUS $odir/boot/uImage > /dev/null 2>&1
     cp $SCRIPT_DIR/orange/script.bin.OPI-PLUS2E_* $odir/boot > /dev/null 2>&1
     if [ ! "${_boot_on_ext4}" = "yes" ] ; then
@@ -456,19 +454,11 @@ echo "*   sudo install_lxde_desktop                              *"
 echo "*   or, for better-looking (wily&vivid&jessie)             *"
 echo "*   sudo install_mate_desktop                              *"
 echo "*   DON'T FORGET TO RESIZE SD CARD IF NECESSARY FIRST      *"
-echo "* -------------------------------------------------------- *"
-echo "* To configure your local settings use:                    *"
-echo "*   sudo dpkg-reconfigure tzdata                           *"
-echo "*   sudo dpkg-reconfigure keyboard-configuration           *"
-echo "*   sudo dpkg-reconfigure console-setup                    *"
-echo "*     # change your system's locale entries by modifying   *"
-echo "*     # the file /etc/default/locale (e.g. en_US.UTF-8)    *"
-echo "*     # then run:                                          *"
-echo "*   sudo locale-gen <your_locale> (e.g en_US.UTF-8)        *"
-echo "*   sudo dpkg-reconfigure locales                          *"
 echo "************************************************************"
 echo -e "\033[37m"
 date
 echo ""
+#fi
 
-exit 0
+. params.sh
+. image_from_dir

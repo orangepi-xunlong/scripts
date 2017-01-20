@@ -1,4 +1,4 @@
-#!/bin/bash
+
 # =====================================================
 # ==== P A R A M E T E R S ============================
 # =====================================================
@@ -88,49 +88,26 @@ linuxsize=800
 #     === SELECT ONLY ONE distro AND ONE repo ===     *
 # *****************************************************
 
-DISTRO=$1
 # === Ubuntu ===
-if [[ $DISTRO = "0" ]]; then
-    distro="precise"
-    repo="http://ports.ubuntu.com/ubuntu-ports"
-elif [[ $DISTRO = "1" ]]; then
-    distro="trusty"
-    repo="http://ports.ubuntu.com/ubuntu-ports"
-elif [[ $DISTRO = "2" ]]; then
-    distro="utopic"
-    repo="http://ports.ubuntu.com/ubuntu-ports"
-elif [[ $DISTRO = "3" ]]; then
-    distro="vivid"
-    repo="http://ports.ubuntu.com/ubuntu-ports"
-elif [[ $DISTRO = "4" ]]; then
-    distro="wily"
-    repo="http://ports.ubuntu.com/ubuntu-ports"
-elif [[ $DISTRO = "5" ]]; then
-    distro="xenial"
-    repo="http://ports.ubuntu.com/ubuntu-ports"
+#distro="precise"
+#distro="trusty"
+#distro="utopic"
+#distro="vivid"
+#distro="wily"
+#repo="http://ports.ubuntu.com/ubuntu-ports"
+
 # === Debian ===
-elif [[ $DISTRO = "6" ]]; then
-    distro="wheezy"
-    repo="http://ftp.hr.debian.org/debian"
-    raspbian="no"
-elif [[ $DISTRO = "7" ]]; then
-    distro="jessie"
-    repo="http://ftp.hr.debian.org/debian"
-    raspbian="no"
+#distro="wheezy"
+distro="jessie"
+repo="http://ftp.hr.debian.org/debian"
+raspbian="no"
+
 # === Raspbian ===
-elif [[ $DISTRO = "8" ]]; then
-    distro="wheezy"
-    repo="http://archive.raspbian.org/raspbian"
-    raspbian="y"
-elif [[ $DISTRO = "9" ]]; then
-    distro="jessie"
-    repo="http://archive.raspbian.org/raspbian"
-    raspbian="y"
-else
-    clear
-    echo "Please selset correct platform!"
-    exit 0
-fi
+#distro="wheezy"
+#distro="jessie"
+#repo="http://archive.raspbian.org/raspbian"
+#raspbian="yes"
+
 # ******************************************************
 # If creating the image, you can xz compress the image *
 # after creation and make the md5sum file              *
