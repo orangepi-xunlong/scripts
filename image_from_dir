@@ -22,18 +22,12 @@ cd $_DIR
 idir=linux-$distro             
 
 # ===================================================
-if [ "${2}" = "" ]; then
-    echo "Source directory not specified."
-    echo "USAGE: image_from_dir <img_name> [noformat] [2|pc|plus|one|lite|pcplus|plus2e]"
-    exit 0
-fi
-
 if [ ! -d "$idir" ] || [ ! -d  "boot-$distro" ]; then
 	sudo cp -rf $TOP/output/linux-$distro ./ 
 	sudo cp -rf $TOP/output/boot-$distro ./
 fi
 
-if [ ! -d $idir ]; then
+if [ ! -d $idir ] && [ "${2}" = "" ]; then
     echo "Source directory not found."
     echo "USAGE: image_from_dir <img_name> [noformat] [2|pc|plus|one|lite|pcplus|plus2e]"
     exit 0
