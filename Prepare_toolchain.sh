@@ -11,7 +11,7 @@ apt-get -y --no-install-recommends --fix-missing install \
 	bsdtar mtools u-boot-tools pv bc \
 	gcc automake make \
 	lib32z1 lib32z1-dev qemu-user-static \
-	dosfstools libncurses5-dev lib32stdc++ debootstrap
+	dosfstools libncurses5-dev lib32stdc++-5-dev debootstrap
 
 # Prepare toolchains
 ROOT=`cd .. && pwd`
