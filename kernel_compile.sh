@@ -109,13 +109,13 @@ if [ $BUILD_MODULE = "1" ]; then
     sleep 1
 
     # build mali driver
-    if [ -f $TOP/kernel/localversion-rt ]; then
-        rm $TOP/kernel/localversion-rt
-    fi
-    cd $TOP/scripts
-    if [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}" = "lite" ] || [ "${1}" = "2" ] || [ "${1}" = "plus" ] || [ "${1}" = "plus2e" ]; then
-	    ./build_mali_driver.sh
-    fi
+    #if [ -f $TOP/kernel/localversion-rt ]; then
+    #    rm $TOP/kernel/localversion-rt
+    #fi
+    #cd $TOP/scripts
+    #if [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}" = "lite" ] || [ "${1}" = "2" ] || [ "${1}" = "plus" ] || [ "${1}" = "plus2e" ]; then
+	    #./build_mali_driver.sh
+    #fi
 
 fi
 }
