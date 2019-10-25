@@ -11,9 +11,9 @@ PLATFORM=$2
 KERNEL=$ROOT/output/uImage_${PLATFORM}
 KERNEL_PATH="$1"
 
-# Update kernel and DTB
+# Update kernel
+rm -rf $KERNEL_PATH/uImage
 cp -rf $KERNEL $KERNEL_PATH/uImage
-cp -rf $ROOT/output/uboot/boot.scr $KERNEL_PATH/
 
 sync
 

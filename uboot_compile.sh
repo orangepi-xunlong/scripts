@@ -1,73 +1,70 @@
 #!/bin/bash
-
-if [ "${1}" = "" ]; then
-	echo "Usage: ./uboot_compile.sh <clean|one|pc|pcplus|plus|plus2e|lite|2>"
-	exit -1
+set -e
+#################################
+##
+## Compile U-boot
+## This script will compile u-boot
+#################################
+# ROOT must be top direct.
+if [ -z $ROOT ]; then
+	ROOT=`cd .. && pwd`
+fi
+# PLATFORM.
+if [ -z $PLATFORM ]; then
+	PLATFORM="OrangePiH3_Pc"
 fi
 
-#export PATH="$TOP/toolchain/toolchain_tar/bin/":"$PATH"
-if [ -z $TOP ]; then
-	TOP=`cd .. && pwd`
-fi
-cross_comp="$TOP/toolchain/bin/arm-linux-gnueabi"
+# Uboot direct
+UBOOT=$ROOT/uboot
+BUILD=$ROOT/output/uboot
+EXTERNAL=$ROOT/external
+CORES=$((`cat /proc/cpuinfo | grep processor | wc -l` - 1))
 
+if [ ! -d $BUILD ]; then
+	mkdir -p $BUILD
+else
+	rm -rf $BUILD/*
+fi
+
+# Perpar souce code
+if [ ! -d $UBOOT ]; then
+	whiptail --title "OrangePi Build System" \
+		--msgbox "u-boot doesn't exist, pls perpare u-boot source code." \
+		10 50 0
+	exit 0
+fi
+
+cd $UBOOT
 clear
-cd $TOP/uboot
-if [ ${1} = "clean" ]; then
-	echo " Clear u-boot ..."
-	sudo rm -rf $TOP/uboot*.log > /dev/null 2>&1
-	sudo rm -rf $TOP/output/uboot
-	sudo make clean 
-	sleep 1
-	echo " Clear ok..."
-	exit -1
+echo "Compile U-boot......"
+if [ ! -f $UBOOT/u-boot-sun8iw7p1.bin ]; then
+	make  sun8iw7p1_config
 fi
+make -j${CORES}
+echo "Complete compile...."
 
-cd $TOP/uboot/configs
-CONFIG="orangepi_${1}_defconfig"
-dts="sun8i-h3-orangepi-${1}.dtb"
-
-if [ ! -f $CONFIG ]; then
-	echo "source not found !"
-	exit -1
+echo "Compile boot0......"
+if [ ! -f $UBOOT/sunxi_spl/boot0/boot0_sdcard.bin ]; then
+	make  sun8iw7p1_config
 fi
-
-echo " Enter u-boot source director..."
-cd ..
-
-if [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}" = "lite" ] || [ "${1}" = "2" ] || [ "${1}" = "plus" ] || [ "${1}" = "plus2e" ]; then
-	make $CONFIG > /dev/null 2>&1
-	echo " Build u-boot..."
-    echo -e "\e[1;31m Build U-boot \e[0m"
-	make -j4 ARCH=arm CROSS_COMPILE=${cross_comp}-
-	if [ ! -d $TOP/output/ ]; then
-		mkdir -p $TOP/output
-	fi
-	rm -rf $TOP/output/uboot/*
-	mkdir -p $TOP/output/uboot
-	cp $TOP/uboot/u-boot-sunxi-with-spl.bin $TOP/output/uboot -rf 
-	echo "*****compile uboot ok*****"
-
-	cp $TOP/external/Legacy_patch/uboot/orangepi.cmd $TOP/output/uboot/ -rf
-	cd $TOP/output/uboot
-	sed -i '/sun8i-h3/d' orangepi.cmd
-	linenum=`grep -n "uImage" orangepi.cmd | awk '{print $1}' | awk -F: '{print $1}'`
-	sed -i "${linenum}i fatload mmc 0 0x46000000 ${dts}" orangepi.cmd
-	chmod +x orangepi.cmd u-boot-sunxi-with-spl.bin
-	mkimage -C none -A arm -T script -d orangepi.cmd boot.scr
-	
-fi
-
-cd $TOP/output/uboot
-LPATH="`pwd`"
+make spl -j${CORES}
 cd -
+echo "Complete compile...."
+#####################################################################
+###
+### Merge uboot with different binary
+#####################################################################
 
-whiptail --title "OrangePi Build System" --msgbox \
- "`figlet OrangePi` Succeed to build u-boot!            Path:$LPATH" \
-           15 50 0
+cp $UBOOT/boot0_sdcard_sun8iw7p1.bin $BUILD
+cp $UBOOT/u-boot-sun8iw7p1.bin $BUILD
+cp $EXTERNAL/Legacy_patch/uboot/* $BUILD
 
+cd $BUILD/
+./update_boot0 boot0_sdcard_sun8iw7p1.bin sys_config.bin SDMMC_CARD
+./update_uboot u-boot-sun8iw7p1.bin sys_config.bin
 
+rm -rf sys_config.bin  update_boot0  update_uboot
 
-
-
-
+cd -
+whiptail --title "OrangePi Build System" \
+	--msgbox "Build uboot finish. The output path: $BUILD" 10 60 0

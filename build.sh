@@ -23,9 +23,6 @@ root_check()
 
 UBOOT_check()
 {
-    cd $ROOT/scripts
-    ./Notice.sh
-    cd -
 	for ((i = 0; i < 5; i++)); do
 		UBOOT_PATH=$(whiptail --title "OrangePi Build System" \
 			--inputbox "Pls input device node of SDcard.(/dev/sdc)" \
@@ -75,7 +72,7 @@ ROOTFS_check()
 {
 	for ((i = 0; i < 5; i++)); do
 		ROOTFS_PATH=$(whiptail --title "OrangePi Build System" \
-			--inputbox "Pls input mount path of rootfs.(/media/orangepi/linux)" \
+			--inputbox "Pls input mount path of rootfs.(/media/orangepi/rootfs)" \
 			10 60 3>&1 1>&2 2>&3)
 	
 		if [ $i = "4" ]; then
@@ -101,30 +98,33 @@ fi
 MENUSTR="Welcome to OrangePi Build System. Pls choose Platform."
 ##########################################
 OPTION=$(whiptail --title "OrangePi Build System" \
-	--menu "$MENUSTR" 15 60 7 --cancel-button Exit --ok-button Select \
-	"0"  "OrangePi PC" \
-	"1"  "OrangePi PC Plus" \
+	--menu "$MENUSTR" 20 80 10 --cancel-button Exit --ok-button Select \
+	"0"  "OrangePi PC Plus" \
+	"1"  "OrangePi PC" \
 	"2"  "OrangePi Plus2E" \
 	"3"  "OrangePi Lite" \
-	"4"  "OrangePi Plus2" \
-	"5"  "OrangePi One" \
-	"6"  "OrangePi 2" \
+	"4"  "OrangePi One" \
+        "5"  "OrangePi 2" \
+        "6"  "OrangePi ZeroPlus2 H3" \
+        "7"  "OrangePi Plus" \
 	3>&1 1>&2 2>&3)
 
 if [ $OPTION = "0" ]; then
-	export PLATFORM="pc"
+	export PLATFORM="pc-plus"
 elif [ $OPTION = "1" ]; then
-	export PLATFORM="pcplus"
+	export PLATFORM="pc"
 elif [ $OPTION = "2" ]; then
 	export PLATFORM="plus2e"
 elif [ $OPTION = "3" ]; then
 	export PLATFORM="lite"
 elif [ $OPTION = "4" ]; then
-	export PLATFORM="plus"
-elif [ $OPTION = "5" ]; then
 	export PLATFORM="one"
-elif [ $OPTION = "6" ]; then
+elif [ $OPTION = "5" ]; then
 	export PLATFORM="2"
+elif [ $OPTION = "6" ]; then
+	export PLATFORM="zero_plus2_h3"
+elif [ $OPTION = "7" ]; then
+	export PLATFORM="plus"
 else
 	echo -e "\e[1;31m Pls select correct platform \e[0m"
 	exit 0
@@ -189,56 +189,125 @@ if [ $OPTION = "0" -o $OPTION = "1" ]; then
 	clear
 	TMP=$OPTION
 	TMP_DISTRO=""
+	OPTION=0
+	SOURCES="CN"
+
+SelectDistro()
+{
 	MENUSTR="Distro Options"
 	OPTION=$(whiptail --title "OrangePi Build System" \
 		--menu "$MENUSTR" 20 60 10 --cancel-button Finish --ok-button Select \
-		"0"   "Ubuntu Pecise" \
-		"1"   "Ubuntu Trusty" \
-		"2"	  "Ubuntu Utopic" \
-		"3"   "Ubuntu Vivid" \
-		"4"   "Ubuntu Wily" \
-		"5"   "Ubuntu Xenial" \
-		"6"   "Debian Wheezy" \
-		"7"   "Debian Jessie" \
-		"8"   "Raspbian Wheezy" \
-		"9"   "Raspbian Jessie" \
+		"0"   "[$SOURCES]Change repository server" \
+		"1"   "Ubuntu Xenial" \
 		3>&1 1>&2 2>&3)
-
-	if [ ! -f $ROOT/output/uImage_${PLATFORM} ]; then
-		cd $SCRIPTS
-		sudo ./kernel_compile.sh ${PLATFORM} "1" "1"
-		sudo ./uboot_compile.sh ${PLATFORM}
-		cd -
+        if [ $OPTION = "0" ]; then
+                SelectSources
+        elif [ $OPTION = "1" ]; then
+                TMP_DISTRO="xenial"
+        fi
+}
+SelectSources()
+{
+	SOURCES=$(whiptail --title "Repository Server" --nocancel --radiolist \
+	        "What is the repository server of your choice?" 20 60 5 \
+	        "CN" "The server from China." ON \
+	        "CDN" "Deafult CDN repository server(RCMD)." OFF \
+	        "OFCL" "Official repository server." OFF 3>&1 1>&2 2>&3)
+	exitstatus=$?
+	if [ $exitstatus = 0 ]; then
+		echo "The chosen server is:" $SOURCES
+		SelectDistro
 	fi
+}
+	SelectDistro
 
-	cd $SCRIPTS
-    sudo ./create_image "$OPTION"
-	exit 0
+        TYPE=$(whiptail --title "OrangePi Build System" \
+                --menu "$MENUSTR" 20 60 3 --cancel-button Finish --ok-button Select \
+                "0"   "Server" \
+                3>&1 1>&2 2>&3)
+	
+        if [ ! -f $ROOT/output/kernel/uImage_$PLATFORM ]; then
+                export BUILD_KERNEL=1
+                cd $SCRIPTS
+                ./kernel_compile.sh
+                cd -
+        fi
+        if [ ! -d $ROOT/output/lib ]; then
+                if [ -f $ROOT/output/lib ]; then
+                        rm $ROOT/output/lib
+                fi
+                mkdir $ROOT/output/lib
+                export BUILD_MODULE=1
+                cd $SCRIPTS
+                ./kernel_compile.sh
+                cd -
+        fi
+        if [ ! -f $ROOT/output/uboot/boot0_sdcard_sun8iw7p1.bin ]; then
+            cd $SCRIPTS
+                ./uboot_compile.sh
+                cd -
+        fi
+
+        if [ $OPTION = "1" ]; then
+                TMP_DISTRO="xenial"
+        fi
+
+        cd $SCRIPTS
+        DISTRO=$TMP_DISTRO
+        if [ -d $ROOT/output/${DISTRO}_rootfs ]; then
+                if (whiptail --title "OrangePi Build System" --yesno \
+                        "${DISTRO} rootfs has exist! Do you want use it?" 10 60) then
+                        OP_ROOTFS=0
+                else
+                        OP_ROOTFS=1
+                fi
+                if [ $OP_ROOTFS = "0" ]; then
+                        sudo cp -rfa $ROOT/output/${DISTRO}_rootfs $ROOT/output/tmp
+                        if [ -d $ROOT/output/rootfs ]; then
+                                sudo rm -rf $ROOT/output/rootfs
+                        fi
+                        sudo mv $ROOT/output/tmp $ROOT/output/rootfs 
+                        whiptail --title "OrangePi Build System" --msgbox "Rootfs has build" \
+                                10 40 0 --ok-button Continue
+                else
+                        sudo ./00_rootfs_build.sh $DISTRO $PLATFORM $TYPE $SOURCES
+                        sudo ./01_rootfs_build.sh $DSITRO 
+                fi
+        else
+                sudo ./00_rootfs_build.sh $DISTRO $PLATFORM $TYPE $SOURCES
+                sudo ./01_rootfs_build.sh $DISTRO
+        fi
+        if [ $TMP = "0" ]; then
+                sudo ./build_image.sh $DISTRO $PLATFORM $TYPE
+                whiptail --title "OrangePi Build System" --msgbox "Succeed to build Image" \
+                                10 40 0 --ok-button Continue
+        fi
+        exit 0
 elif [ $OPTION = "2" ]; then
 	cd $SCRIPTS
-	sudo ./uboot_compile.sh $PLATFORM
+	./uboot_compile.sh $PLATFORM
 	clear
 	exit 0
 elif [ $OPTION = "3" ]; then
 	export BUILD_KERNEL=1
 	export BUILD_MODULE=1
 	cd $SCRIPTS
-	sudo ./kernel_compile.sh $PLATFORM $BUILD_KERNEL $BUILD_MODULE
+	./kernel_compile.sh 
 	exit 0
 elif [ $OPTION = "4" ]; then
 	export BUILD_KERNEL=1
 	export BUILD_MODULE=0
 	cd $SCRIPTS
-	sudo ./kernel_compile.sh $PLATFORM $BUILD_KERNEL $BUILD_MODULE
+	./kernel_compile.sh
 	exit 0
 elif [ $OPTION = "5" ]; then
 	export BUILD_KERNEL=0
 	export BUILD_MODULE=1
 	cd $SCRIPTS
-	sudo ./kernel_compile.sh $PLATFORM $BUILD_KERNEL $BUILD_MODULE
+	./kernel_compile.sh
 	exit 0
 elif [ $OPTION = "6" ]; then
-	sudo echo ""
+	echo ""
 	clear
 	UBOOT_check
 	clear
@@ -255,10 +324,10 @@ elif [ $OPTION = '7' ]; then
 	BOOT_check
 	clear
 	cd $SCRIPTS
-	sudo ./kernel_update.sh $BOOT_PATH $PLATFORM
+	./kernel_update.sh $BOOT_PATH $PLATFORM
 	exit 0
 elif [ $OPTION = '8' ]; then
-	sudo echo ""
+	echo ""
 	clear 
 	ROOTFS_check
 	clear
@@ -270,7 +339,7 @@ elif [ $OPTION = '9' ]; then
 	UBOOT_check
 	clear
 	cd $SCRIPTS
-	sudo ./uboot_update.sh $UBOOT_PATH
+	sudo ./uboot_update.sh $UBOOT_PATH $PLATFORM
 	exit 0
 else
 	whiptail --title "OrangePi Build System" \

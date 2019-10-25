@@ -11,8 +11,8 @@ apt-get -y --no-install-recommends --fix-missing install \
 	bsdtar mtools u-boot-tools pv bc \
 	gcc automake make \
 	lib32z1 lib32z1-dev qemu-user-static \
-	dosfstools libncurses5-dev lib32stdc++-5-dev debootstrap
-
+	dosfstools libncurses5-dev lib32stdc++-5-dev debootstrap \
+	swig libpython2.7-dev libssl-dev
 # Prepare toolchains
 ROOT=`cd .. && pwd`
 chmod 755 -R $ROOT/toolchain/*

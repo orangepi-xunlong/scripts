@@ -10,14 +10,11 @@ fi
 OUTPUT="$1"
 BUILD=$ROOT/output
 
-FILE_NUM=$(ls $BUILD/lib/modules -lR | grep "^-" | wc -l)
 #####
 # Remove old modules
 rm -rf $OUTPUT/lib/modules
-rm -rf $OUTPUT/lib/firmware
 
 cp -rfa $BUILD/lib/modules $OUTPUT/lib/ 
-cp -rfa $BUILD/lib/firmware $OUTPUT/lib/ 
 
 sync 
 clear

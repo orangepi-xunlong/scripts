@@ -1,158 +1,113 @@
 #!/bin/bash
+set -e
+##############################################
+##
+## Compile kernel
+##
+##############################################
+if [ -z $ROOT ]; then
+	ROOT=`cd .. && pwd`
+fi
+# Platform
+if [ -z $PLATFORM ]; then
+	PLATFORM="pc-plus"
+fi
+# Cleanup
+if [ -z $CLEANUP ]; then
+	CLEANUP="0"
+fi
 
-if [ "${1}" = "" ]; then
-	echo "Usage: ./kernel_compile.sh <clean|one|pc|pcplus|plus|plus2e|lite|2> <clean>"
+# kernel option
+if [ -z $BUILD_KERNEL ]; then
+	BUILD_KERNEL="0"
+fi
+# module option
+if [ -z $BUILD_MODULE ]; then
+	BUILD_MODULE="0"
+fi
+# Knernel Direct
+LINUX=$ROOT/kernel
+# Compile Toolchain
+TOOLS=$ROOT/toolchain/bin/arm-linux-gnueabi-
+# OUTPUT DIRECT
+BUILD=$ROOT/output
+EXTER=$ROOT/external
+CORES=8
+
+if [ ! -d $BUILD ]; then
+	mkdir -p $BUILD
+fi 
+
+if [ ! -d $BUILD/kernel ]; then
+	mkdir -p $BUILD/kernel
+fi 
+
+# Perpare souce code
+if [ ! -d $LINUX ]; then
+	whiptail --title "OrangePi Build System" --msgbox \
+		"Kernel doesn't exist, pls perpare linux source code." 10 40 0 --cancel-button Exit
 	exit 0
 fi
 
-if [ -z $TOP ]; then
-	TOP=`cd .. && pwd`
-fi
-if [ ! -d $TOP/output ]; then
-	mkdir -p $TOP/output
-fi
-
-###
-BUILD_KERNEL=$2
-BUILD_MODULE=$3
-
-#export PATH="$TOP/toolchain/toolchain_tar/bin":"$PATH"
-cross_comp="$TOP/toolchain/bin/arm-linux-gnueabi"
-cd $TOP/output
-rm -rf $TOP/external/Legacy_patch/rootfs-lobo.img.gz > /dev/null 2>&1
-cd $TOP/external/Legacy_patch/rootfs-test1
-mkdir run > /dev/null 2>&1
-mkdir -p conf/conf.d > /dev/null 2>&1
-
-find . | cpio --quiet -o -H newc > ../rootfs-lobo.img
-cd ..
-gzip rootfs-lobo.img
-
-cd $TOP/kernel
-LINKERNEL_DIR=`pwd`
-rm -rf $TOP/output/lib > /dev/null 2>&1
-mkdir -p $TOP/output/lib > /dev/null 2>&1
-cp $TOP/external/Legacy_patch/rootfs-lobo.img.gz $TOP/output/rootfs.cpio.gz
-rm -rf $TOP/kernel/output
-if [ ! -d $TOP/kernel/output ]; then
-	mkdir -p $TOP/kernel/output
-fi
-chmod +x $TOP/kernel/output
-rm -rf $TOP/kernel/output/*
-cp $TOP/output/rootfs.cpio.gz $TOP/kernel/output/
-#============================================================================================
-
-make_kernel() {
-if [ "${1}" = "plus" ] || [ "${1}" = "plus2e" ]; then
-	cp $TOP/external/Legacy_patch/Kconfig.piplus drivers/net/ethernet/sunxi/eth/Kconfig
-	cp $TOP/external/Legacy_patch/sunxi_geth.c.piplus drivers/net/ethernet/sunxi/eth/sunxi_geth.c
-	cp $TOP/external/Legacy_patch/sun8iw7p1smp_linux_defconfig arch/arm/configs/sun8iw7p1smp_linux_defconfig
-elif [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}" = "lite" ] || [ "${1}" = "2" ]; then
-	cp $TOP/external/Legacy_patch/Kconfig.pi2 drivers/net/ethernet/sunxi/eth/Kconfig
-	cp $TOP/external/Legacy_patch/sunxi_geth.c.pi2 drivers/net/ethernet/sunxi/eth/sunxi_geth.c
-	cp $TOP/external/Legacy_patch/sun8iw7p1smp_linux_defconfig arch/arm/configs/sun8iw7p1smp_linux_defconfig
-fi
-
-#===========================================================================================
 clear
+echo -e "\e[1;31m Start Compile.....\e[0m"
 
-if [ "${2}" = "clean" ]; then
-	make ARCH=arm CROSS_COMPILE=${cross_comp}- mrproper > /dev/null 2>&1
+if [ $CLEANUP = "1" ]; then
+	make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS clean
+	echo -e "\e[1;31m Clean up kernel \e[0m"
 fi
-sleep 1
-echo -e "\e[1;31m Building kernel for OrangePi-${1} ...\e[0m"
-if [ ! -f $TOP/kernel/.config ]; then
-    echo -e "\e[1;31m Configuring ... \e[0m"
-	make ARCH=arm CROSS_COMPILE=${cross_comp}- mrproper > /dev/null 2>&1
-    make ARCH=arm CROSS_COMPILE=${cross_comp}- sun8iw7p1smp_linux_defconfig 
-fi
-if [ $? -ne 0 ]; then
-	echo " Error: Kernel not built."
-	exit 1
-fi
-sleep 1
 
-#===================================================================================
-# build kernel (use -jN, where N is number of cores you can spare for building)
+if [ ! -f $LINUX/.config ]; then
+	make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS sun8iw7p1smp_defconfig
+	echo -e "\e[1;31m Using ${PLATFROM}_linux_defconfig \e[0m"
+fi
 
 if [ $BUILD_KERNEL = "1" ]; then
-    echo -e "\e[1;31m Building Kernel and Modules \e[0m"
-    make -j6 ARCH=arm CROSS_COMPILE=${cross_comp}- uImage
-    if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
-            echo " Error: kernel not built."
-            exit 1
-    fi
-    #==================================================
-    # copy uImage to output
-    cp arch/arm/boot/uImage $TOP/output/uImage_${1}
+	# make kernel
+	echo -e "\e[1;31m Start Compile Kernel \e[0m"
+	make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS -j${CORES}
+	make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS -j${CORES} uImage
 fi
 
 if [ $BUILD_MODULE = "1" ]; then
-    make -j6 ARCH=arm CROSS_COMPILE=${cross_comp}- modules 
-
-    sleep 1
-
-    #====================================================
-    # export modules to output
-
-    echo -e "\e[1;31m Exporting Modules \e[0m"
-    rm -rf $TOP/output/lib/* 
-    make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output modules_install 
-    if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
-	    echo " Error."
-    fi
-    echo -e "\e[1;31m Exporting Firmware ... \e[0m"
-    make ARCH=arm CROSS_COMPILE=${cross_comp}- INSTALL_MOD_PATH=$TOP/output firmware_install 
-    if [ $? -ne 0 ] || [ ! -f arch/arm/boot/uImage ]; then
-	    echo " Error."
-    fi
-    sleep 1
-
-    # build mali driver
-    #if [ -f $TOP/kernel/localversion-rt ]; then
-    #    rm $TOP/kernel/localversion-rt
-    #fi
-    #cd $TOP/scripts
-    #if [ "${1}" = "one" ] || [ "${1}" = "pc" ] || [ "${1}" = "pcplus" ] || [ "${1}" = "lite" ] || [ "${1}" = "2" ] || [ "${1}" = "plus" ] || [ "${1}" = "plus2e" ]; then
-	    #./build_mali_driver.sh
-    #fi
-
-fi
-}
-#==========================================================================================
-
-if [ "${1}" = "clean" ]; then
-	echo "cleaning ..."
-	make ARCH=arm CROSS_COMPILE=${cross_comp}- mrproper > /dev/null 2>&1
-	if [ $? -ne 0 ]; then
-		echo " Error."
+	if [ ! -d $BUILD/lib ]; then
+		mkdir -p $BUILD/lib
+	else
+		rm -rf $BUILD/lib/* 
 	fi
-	rm -rf $TOP/output/lib/* > /dev/null 2>&1
-	rm -rf $TOP/output/uImage* > /dev/null 2>&1
-	rm -rf $TOP/kbuild* > /dev/null 2>&1
-	rm -rf $TOP/malibuild* > /dev/null 2>&1
-	rm if  $TOP/kernel/modules/malibuild* > /dev/null 2>&1
-	rm -rf output/* > /dev/null 2>&1
-	rm -rf $TOP/external/Legacy_patch/rootfs-lobo.img.gz > /dev/null 2>&1
-else
-	make_kernel "${1}" "${2}"
+
+	# install module
+	echo -e "\e[1;31m Start Install Module \e[0m"
+	make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS -j${CORES} modules_install INSTALL_MOD_PATH=$BUILD
+
+	# install mali driver
+	#echo -e "\e[1;31m Start Install Mali driver \e[0m"
+	#cd $EXTER/sunxi-mali
+	#export CROSS_COMPILE=$TOOLS
+	#export KDIR=$LINUX
+	#export INSTALL_MOD_PATH=$BUILD
+	#rm -rf *
+	#git checkout .
+	#./build.sh -r r6p2 -b
+	#./build.sh -r r6p2 -i
 fi
 
-echo "******OK*****"
+#if [ $BUILD_KERNEL = "1" ]; then
+#	if [ ! -d $BUILD/dtb ]; then
+#		mkdir -p $BUILD/dtb
+#	else
+#		rm -rf $BUILD/dtb/*
+#	fi
+
+	# copy dtbs
+#	echo -e "\e[1;31m Start Copy dtbs \e[0m"
+#  	cp $LINUX/arch/arm/boot/dts/sun8i-h3-orangepi*.dtb $BUILD/dtb/ 	
+#  	cp $LINUX/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dtb $BUILD/dtb/ 	
+	
+	cp $LINUX/arch/arm/boot/uImage $BUILD/kernel/uImage_$PLATFORM
+#	cp $LINUX/System.map $BUILD/System.map-$PLATFORM
+#fi
 
 clear
-cd $TOP/output/
-LPATH="`pwd`"
-cd -
-
 whiptail --title "OrangePi Build System" --msgbox \
- "`figlet OrangePi` Succeed to build Linux!            Path:$LPATH" \
-            15 50 0
-
-clear
-
-
-
-
-
-
+	"Build Kernel OK. The path of output file: ${BUILD}" 10 80 0
