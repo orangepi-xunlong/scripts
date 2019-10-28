@@ -57,7 +57,7 @@ echo "Complete compile...."
 
 cp $UBOOT/boot0_sdcard_sun8iw7p1.bin $BUILD
 cp $UBOOT/u-boot-sun8iw7p1.bin $BUILD
-cp $EXTERNAL/Legacy_patch/uboot/* $BUILD
+cp $EXTERNAL/uboot/tools/* $BUILD
 
 cd $BUILD/
 ./update_boot0 boot0_sdcard_sun8iw7p1.bin sys_config.bin SDMMC_CARD
