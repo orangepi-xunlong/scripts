@@ -224,7 +224,14 @@ SelectSources()
         TYPE=$(whiptail --title "OrangePi Build System" \
                 --menu "$MENUSTR" 20 60 3 --cancel-button Finish --ok-button Select \
                 "0"   "Server" \
+                "1"   "Desktop" \
                 3>&1 1>&2 2>&3)
+	
+	if [ ${TYPE} = "1" ]; then
+        	IMAGETYPE="desktop"
+	else
+        	IMAGETYPE="server"
+	fi
 	
         if [ ! -f $ROOT/output/kernel/uImage_$PLATFORM ]; then
                 export BUILD_KERNEL=1
@@ -248,13 +255,9 @@ SelectSources()
                 cd -
         fi
 
-        if [ $OPTION = "1" ]; then
-                TMP_DISTRO="xenial"
-        fi
-
         cd $SCRIPTS
         DISTRO=$TMP_DISTRO
-        if [ -d $ROOT/output/${DISTRO}_rootfs ]; then
+        if [ -d $ROOT/output/${DISTRO}_${IMAGETYPE}_rootfs ]; then
                 if (whiptail --title "OrangePi Build System" --yesno \
                         "${DISTRO} rootfs has exist! Do you want use it?" 10 60) then
                         OP_ROOTFS=0
@@ -262,22 +265,22 @@ SelectSources()
                         OP_ROOTFS=1
                 fi
                 if [ $OP_ROOTFS = "0" ]; then
-                        sudo cp -rfa $ROOT/output/${DISTRO}_rootfs $ROOT/output/tmp
                         if [ -d $ROOT/output/rootfs ]; then
                                 sudo rm -rf $ROOT/output/rootfs
                         fi
-                        sudo mv $ROOT/output/tmp $ROOT/output/rootfs 
-                        whiptail --title "OrangePi Build System" --msgbox "Rootfs has build" \
-                                10 40 0 --ok-button Continue
+                        sudo cp -rfa $ROOT/output/${DISTRO}_${IMAGETYPE}_rootfs $ROOT/output/rootfs
+                        #whiptail --title "OrangePi Build System" --msgbox "Rootfs has build" \
+                        #        10 40 0 --ok-button Continue
                 else
                         sudo ./00_rootfs_build.sh $DISTRO $PLATFORM $TYPE $SOURCES
-                        sudo ./01_rootfs_build.sh $DSITRO 
+                        sudo ./01_rootfs_build.sh $DISTRO $TYPE 
                 fi
         else
                 sudo ./00_rootfs_build.sh $DISTRO $PLATFORM $TYPE $SOURCES
-                sudo ./01_rootfs_build.sh $DISTRO
+                sudo ./01_rootfs_build.sh $DISTRO $TYPE
         fi
         if [ $TMP = "0" ]; then
+		#sudo ./02_rootfs_build.sh
                 sudo ./build_image.sh $DISTRO $PLATFORM $TYPE
                 whiptail --title "OrangePi Build System" --msgbox "Succeed to build Image" \
                                 10 40 0 --ok-button Continue

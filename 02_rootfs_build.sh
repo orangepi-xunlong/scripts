@@ -48,12 +48,6 @@ if [ ! -d "$DEST" ]; then
 	mkdir -p $DEST
 fi
 
-if [ "$(ls -A -Ilost+found $DEST)" ]; then
-	echo "Destination $DEST is not empty."
-	echo "Clean up space."
-	rm -rf $DEST/*
-fi
-
 if [ -z "$DISTRO" ]; then
 	DISTRO="xenial"
 fi
@@ -102,13 +96,13 @@ cat > "$DEST/second-phase" <<EOF
 export DEBIAN_FRONTEND=noninteractive
 locale-gen en_US.UTF-8
 apt-get -y update
-apt-get -y install 
+apt-get -y install lubuntu-desktop vlc
 apt-get -y autoremove
 apt-get clean
 EOF
 		chmod +x "$DEST/second-phase"
 		do_chroot /second-phase
-		do_conffile
+		#do_conffile
 
 		rm -f "$DEST/second-phase"
 

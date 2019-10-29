@@ -8,7 +8,7 @@ if [ -z $ROOT ]; then
 	ROOT=`cd .. && pwd`
 fi
 PLATFORM=$2
-KERNEL=$ROOT/output/uImage_${PLATFORM}
+KERNEL=$ROOT/output/kernel/uImage_${PLATFORM}
 KERNEL_PATH="$1"
 
 # Update kernel

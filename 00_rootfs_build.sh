@@ -236,17 +236,13 @@ add_platform_scripts() {
 
 do_conffile() {
         mkdir -p $DEST/opt/boot
-        cp $BUILD/uboot/* $DEST/opt/boot/ -f
+        cp $BUILD/uboot/*.bin $DEST/opt/boot/ -f
         cp $BUILD/install_to_emmc $DEST/usr/local/sbin/ -f
         cp $BUILD/resize_rootfs.sh $DEST/usr/local/sbin/ -f
         cp $BUILD/sshd_config $DEST/etc/ssh/ -f
+        cp $BUILD/bluetooth/bt.sh $DEST/usr/local/sbin/ -f
+        cp $BUILD/bluetooth/brcm_patchram_plus/brcm_patchram_plus $DEST/usr/local/sbin/ -f
         chmod +x $DEST/usr/local/sbin/*
-}
-
-set_firefox() {
-	if [ $TYPE = "1" ]; then
-        	cp $BUILD/firefox-esr_52.9.0esr+build2-0ubuntu0.16.04.1_armhf.deb $DEST/opt/
-	fi
 }
 
 add_mackeeper_service() {
@@ -399,7 +395,6 @@ case $DISTRO in
 			exit 2
 		fi
 		add_${DEB}_apt_sources $DISTRO
-		set_firefox
 		rm -rf "$DEST/etc/apt/sources.list.d/proposed.list"
 		cat > "$DEST/second-phase" <<EOF
 #!/bin/sh
@@ -407,7 +402,7 @@ export DEBIAN_FRONTEND=noninteractive
 locale-gen en_US.UTF-8
 apt-get -y update
 apt-get -y install dosfstools curl xz-utils iw rfkill wpasupplicant openssh-server alsa-utils $EXTRADEBS
-apt-get -y install rsync u-boot-tools vim parted network-manager usbmount git autoconf gcc libtool libsysfs-dev pkg-config libdrm-dev xutils-dev hostapd dnsmasq apt-transport-https man subversion libjpeg8-dev imagemagick libv4l-dev cmake
+apt-get -y install rsync u-boot-tools vim parted network-manager usbmount git autoconf gcc libtool libsysfs-dev pkg-config libdrm-dev xutils-dev hostapd dnsmasq apt-transport-https man subversion libjpeg8-dev imagemagick libv4l-dev cmake bluez
 apt-get -y remove --purge ureadahead
 $ADDPPACMD
 apt-get -y update
@@ -431,10 +426,7 @@ EOF
 if [ $TYPE = "1"  ]; then
                 cat > "$DEST/type-phase" <<EOF
 #!/bin/sh
-apt-get -y install lubuntu-desktop vlc
-
-apt-get -y remove firefox
-dpkg -i /opt/firefox-esr_52.9.0esr+build2-0ubuntu0.16.04.1_armhf.deb
+apt-get -y install lubuntu-desktop
 
 apt-get -y autoremove
 apt-get clean

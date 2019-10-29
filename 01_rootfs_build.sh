@@ -15,6 +15,12 @@ else
 	DISTRO=$1
 fi
 
+if [ $2 = "1" ]; then
+        IMAGETYPE="desktop"
+else
+        IMAGETYPE="server"
+fi
+
 BUILD="$ROOT/external"
 OUTPUT="$ROOT/output"
 DEST="$OUTPUT/rootfs"
@@ -33,8 +39,8 @@ make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLCHAIN headers_install INSTALL_HDR_PAT
 
 cp $BUILD/firmware $DEST/lib/ -rf
 
-rm -rf $OUTPUT/${DISTRO}_rootfs
-cp -rfa $DEST $OUTPUT/${DISTRO}_rootfs
+rm -rf $OUTPUT/${DISTRO}_${IMAGETYPE}_rootfs
+cp -rfa $DEST $OUTPUT/${DISTRO}_${IMAGETYPE}_rootfs
 
 clear
 whiptail --title "OrangePi Build System" \
