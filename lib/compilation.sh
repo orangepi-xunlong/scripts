@@ -93,6 +93,7 @@ compile_kernel()
 
 		if [ $KERNELVER = "0" ]; then
 			make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS -j${CORES} uImage
+			make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS -j${CORES} modules
 			cp $LINUX/arch/arm/boot/uImage $BUILD/kernel/uImage_$PLATFORM
 		else
 			# make kernel
@@ -123,6 +124,7 @@ compile_kernel()
 
 		# install module
 		echo -e "\e[1;31m Start installing kernel modules ... \e[0m"
+		make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS -j${CORES} modules
 		make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS -j${CORES} modules_install INSTALL_MOD_PATH=$BUILD
 		echo -e "\e[1;31m Complete kernel module installation ... \e[0m"
 
