@@ -319,6 +319,7 @@ EOF
 	else
 	cat > "$DEST/type-phase" <<EOF
 #!/bin/bash
+export DEBIAN_FRONTEND=noninteractive
 apt-get -y install xorg xfce4 xfce4-goodies vlc network-manager-gnome
 
 apt-get -y autoremove
