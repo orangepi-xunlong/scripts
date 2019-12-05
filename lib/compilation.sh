@@ -51,6 +51,7 @@ compile_uboot()
 			pack
 			;;
 		"OrangePiH3_mainline" | "OrangePiH6_mainline")
+			cp ${EXTER}/chips/${CHIP}/mainline/bl31.bin ${UBOOT}/
 			make orangepi_"${BOARD}"_defconfig
 			make -j4 ARCH=arm CROSS_COMPILE="${UBOOT_COMPILE}"
 

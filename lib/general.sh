@@ -162,7 +162,7 @@ uboot_update()
 		"OrangePiH3_mainline" | "OrangePiH6_mainline")
 			dd if=/dev/zero of=$UBOOT_PATH bs=1k seek=8 count=1015
 			uboot=$BUILD/uboot/u-boot-sunxi-with-spl.bin-${BOARD}
-			dd if=$uboot of=$UBOOT_PATH conv=notrunc bs=1k seek=16400
+			dd if=$uboot of=$UBOOT_PATH conv=notrunc bs=1k seek=8
 			;;
 		"*")
 			;;
