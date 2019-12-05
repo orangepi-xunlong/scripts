@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 deboostrap_rootfs() {
 	dist="$1"
 	tgz="$(readlink -f "$2")"
@@ -21,21 +20,19 @@ deboostrap_rootfs() {
 
 	apt-get -y install debootstrap qemu-user-static
 
-	qemu-debootstrap --arch=armhf --keyring=$TEMP/$KR $dist rootfs ${SOURCES}
+	qemu-debootstrap --arch=${ROOTFS_ARCH} --keyring=$TEMP/$KR $dist rootfs ${SOURCES}
 	rm -f $KR
 
 	# keeping things clean as this is copied later again
-	rm -f rootfs/usr/bin/qemu-arm-static
+	rm -f rootfs"${QEMU}"
 
 	bsdtar -C $TEMP/rootfs -a -cf $tgz .
 	rm -fr $TEMP/rootfs
-
-	cd -
 }
 
 do_chroot() {
 	# Add qemu emulation.
-	cp /usr/bin/qemu-arm-static "$DEST/usr/bin"
+	cp ${QEMU} "$DEST/usr/bin"
 
 	cmd="$@"
 	chroot "$DEST" mount -t proc proc /proc || true
@@ -45,27 +42,69 @@ do_chroot() {
 	chroot "$DEST" umount /proc
 
 	# Clean up
-	rm -f "$DEST/usr/bin/qemu-arm-static"
+	rm -f "${DEST}${QEMU}"
 }
 
 do_conffile() {
         mkdir -p $DEST/opt/boot
-	if [ $KERNELVER = 0 ]; then
-        	cp $EXTER/install_to_emmc_$OS $DEST/usr/local/sbin/install_to_emmc -f
-        	cp $EXTER/uboot/*.bin $DEST/opt/boot/ -f
-        	cp $EXTER/resize_rootfs.sh $DEST/usr/local/sbin/ -f
-	else
-		cp $BUILD/uboot/u-boot-sunxi-with-spl.bin-${PLATFORM} $DEST/opt/boot/u-boot-sunxi-with-spl.bin -f
-        	cp $EXTER/mainline/install_to_emmc_$OS $DEST/usr/local/sbin/install_to_emmc -f
-        	cp $EXTER/mainline/resize_rootfs.sh $DEST/usr/local/sbin/ -f
-        	cp $EXTER/mainline/boot_emmc/* $DEST/opt/boot/ -f
-	fi
 
-        cp $EXTER/sshd_config $DEST/etc/ssh/ -f
-        cp $EXTER/profile_for_root $DEST/root/.profile -f
-        cp $EXTER/bluetooth/bt.sh $DEST/usr/local/sbin/ -f
-        cp $EXTER/bluetooth/brcm_patchram_plus/brcm_patchram_plus $DEST/usr/local/sbin/ -f
+	BOARD_FILE="$EXTER/chips/${CHIP}"
+	
+	case "${PLATFORM}" in
+		"OrangePiH3" | "OrangePiH6_Linux4.9")
+	       	 	cp ${BOARD_FILE}/boot_emmc/* $DEST/opt/boot/ -f
+	        	cp ${BOARD_FILE}/resize_rootfs.sh $DEST/usr/local/sbin/ -f
+	       	 	cp ${BOARD_FILE}/install_to_emmc $DEST/usr/local/sbin/install_to_emmc -f
+	       	 	cp ${BOARD_FILE}/orangepi"${BOARD}"/sbin/* $DEST/usr/local/sbin/ -f
+	       	 	cp ${BOARD_FILE}/orangepi"${BOARD}"/modules.conf $DEST/etc/modules-load.d/ -f
+			;;
+		"OrangePiH3_mainline" | "OrangePiH6_mainline")
+			cp $BUILD/uboot/u-boot-sunxi-with-spl.bin-${BOARD} $DEST/opt/boot/u-boot-sunxi-with-spl.bin -f
+	       	 	cp ${BOARD_FILE}/mainline/install_to_emmc_$OS $DEST/usr/local/sbin/install_to_emmc -f
+	        	cp ${BOARD_FILE}/resize_rootfs.sh $DEST/usr/local/sbin/ -f
+	       	 	cp ${BOARD_FILE}/mainline/orangepi"${BOARD}"/sbin/* $DEST/usr/local/sbin/ -f
+	       	 	cp ${BOARD_FILE}/mainline/orangepi"${BOARD}"/modules.conf $DEST/etc/modules-load.d/ -f
+			;;
+		"*")	
+		        echo -e "\e[1;31m Pls select correct platform \e[0m"
+		        exit 0
+			;;
+	esac
+
+        cp $EXTER/common/rootfs/sshd_config $DEST/etc/ssh/ -f
+        cp $EXTER/common/rootfs/networking.service $DEST/lib/systemd/system/networking.service -f
+        cp $EXTER/common/rootfs/profile_for_root $DEST/root/.profile -f
         chmod +x $DEST/usr/local/sbin/*
+}
+
+add_bt_service() {
+	cat > "$DEST/lib/systemd/system/bt.service" <<EOF
+[Unit]
+Description=OrangePi BT Service
+
+[Service]
+ExecStart=/usr/local/sbin/bt.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+	do_chroot systemctl enable bt.service
+}
+
+add_audio_service() {
+	cat > "$DEST/lib/systemd/system/audio.service" <<EOF
+[Unit]
+Description=OrangePi Audio Service
+
+[Service]
+ExecStart=/usr/local/sbin/audio.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        do_chroot systemctl enable audio.service
 }
 
 add_ssh_keygen_service() {
@@ -131,6 +170,14 @@ EOF
 
 prepare_env()
 {
+	if [ ${ARCH} = "arm" ];then
+		QEMU="/usr/bin/qemu-arm-static"
+		ROOTFS_ARCH="armhf"
+	elif [ ${ARCH} = "arm64" ];then
+		QEMU="/usr/bin/qemu-aarch64-static"
+		ROOTFS_ARCH="arm64"
+	fi
+
 	if [ ! -d "$DEST" ]; then
 		echo "Destination $DEST not found or not a directory."
 		echo "Create $DEST"
@@ -157,54 +204,36 @@ prepare_env()
 	trap cleanup EXIT
 
 	case $DISTRO in
-		xenial)
+		xenial | bionic)
 			case $SOURCES in
 				"CDN"|"OFCL")
 			       	        SOURCES="http://ports.ubuntu.com"
-					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-16.04-core-armhf.tar.gz"
+					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
 				"CN")
-				        #SOURCES="http://mirrors.aliyun.com/ubuntu-ports"
+				        SOURCES="http://mirrors.aliyun.com/ubuntu-ports"
 		                        #SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
-				        SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
-					ROOTFS="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-16.04-core-armhf.tar.gz"
+				        #SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
+					ROOTFS="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
 				*)
 					SOURCES="http://ports.ubuntu.com"
-					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-16.04-core-armhf.tar.gz"
+					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 					;;
 			esac
 			;;
-		bionic)
-		        case $SOURCES in
-		                "CDN"|"OFCL")
-		                        SOURCES="http://ports.ubuntu.com"
-					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-18.04-base-armhf.tar.gz"
-		                        ;;
-		                "CN")
-		                        #SOURCES="http://mirrors.aliyun.com/ubuntu-ports"
-		                        SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
-				        #SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
-					ROOTFS="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-18.04-base-armhf.tar.gz"
-		                        ;;
-		                *)
-		                        SOURCES="http://ports.ubuntu.com"
-					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-18.04-base-armhf.tar.gz"
-		                        ;;
-		        esac
-		        ;;
 		stretch)
-			ROOTFS="${DISTRO}-base-arm.tar.gz"
+			ROOTFS="${DISTRO}-base-${ARCH}.tar.gz"
 			METHOD="debootstrap"
 			case $SOURCES in
 		                "CDN")
 		                        SOURCES="http://httpredir.debian.org/debian"
 		                        ;;
 		                "OFCL")
-		                        SOURCES="http://ftp2.debian.org/debian"
+		                        SOURCES="http://ftp.debian.org/debian"
 		                        ;;
 		                "CN")
-		                        SOURCES="http://ftp2.cn.debian.org/debian"
+		                        SOURCES="http://ftp.cn.debian.org/debian"
 		                        ;;
 				*)
 					SOURCES="http://httpredir.debian.org/debian"
@@ -240,47 +269,37 @@ prepare_env()
 prepare_rootfs_server()
 {
 
+	DEBUSER="orangepi"
+
 	rm "$DEST/etc/resolv.conf"
 	cp /etc/resolv.conf "$DEST/etc/resolv.conf"
-	if [ "$DISTRO" = "xenial" -o "$DISTRO" = "bionic" ]; then
-		DEB=ubuntu
-		DEBUSER=orangepi
-		EXTRADEBS="software-properties-common libjpeg8-dev usbmount zram-config ubuntu-minimal"
-		ADDPPACMD=
-		DISPTOOLCMD=
-	elif [ "$DISTRO" = "sid" -o "$DISTRO" = "stretch" -o "$DISTRO" = "stable" ]; then
-		DEB=debian
-		DEBUSER=orangepi
-		EXTRADEBS="sudo net-tools g++ libjpeg-dev"
-		ADDPPACMD=
-		DISPTOOLCMD=
-	else
-		echo "Unknown DISTRO=$DISTRO"
-		exit 2
-	fi
-	add_${DEB}_apt_sources $DISTRO
 	rm -rf "$DEST/etc/apt/sources.list.d/proposed.list"
+	add_${OS}_apt_sources $DISTRO
+
+	case "${DISTRO}" in
+		"xenial" | "bionic")
+			EXTRADEBS="software-properties-common libjpeg8-dev usbmount ubuntu-minimal"
+			;;
+		"sid" | "stretch" | "stable")
+			EXTRADEBS="sudo net-tools g++ libjpeg-dev" 
+			;;
+		"*")	
+			echo "Unknown DISTRO=$DISTRO"
+			exit 2
+			;;
+	esac
+
 	cat > "$DEST/second-phase" <<EOF
 #!/bin/bash
 export DEBIAN_FRONTEND=noninteractive
 locale-gen en_US.UTF-8
 
 apt-get -y update
-apt-get -y install dosfstools curl xz-utils iw rfkill
-apt-get -y install wpasupplicant openssh-server alsa-utils
-apt-get -y install rsync u-boot-tools vim
-apt-get -y install parted network-manager git autoconf gcc libtool
-apt-get -y install libsysfs-dev pkg-config libdrm-dev xutils-dev hostapd
-apt-get -y install dnsmasq apt-transport-https man subversion
-apt-get -y install imagemagick libv4l-dev cmake bluez
-apt-get -y install $EXTRADEBS
+apt-get -y install dosfstools curl xz-utils iw rfkill wireless-tools wpasupplicant openssh-server alsa-utils rsync u-boot-tools vim parted network-manager git autoconf gcc libtool libsysfs-dev pkg-config libdrm-dev xutils-dev hostapd dnsmasq apt-transport-https man subversion imagemagick libv4l-dev cmake bluez $EXTRADEBS
 
 apt-get install -f
-
 apt-get -y remove --purge ureadahead
-$ADDPPACMD
 apt-get -y update
-$DISPTOOLCMD
 adduser --gecos $DEBUSER --disabled-login $DEBUSER --uid 1000
 adduser --gecos root --disabled-login root --uid 0
 echo root:orangepi | chpasswd
@@ -299,27 +318,39 @@ EOF
         rm -f "$DEST/etc/resolv.conf"
 
 	cd $BUILD
-	tar czf ${DISTRO}_server_rootfs.tar.gz rootfs
-	cd -
+	tar czf ${DISTRO}_${ARCH}_server_rootfs.tar.gz rootfs
 }
 
 prepare_rootfs_desktop()
 {
 	cp /etc/resolv.conf "$DEST/etc/resolv.conf"
 	if [ $DISTRO = "xenial" ]; then
+		if [ ${ARCH} = "arm64" ];then
 	cat > "$DEST/type-phase" <<EOF
 #!/bin/bash
+apt-get update
+apt-get -y install xubuntu-desktop
+
+apt-get install -f
+apt-get -y autoremove
+apt-get clean
+EOF
+		else
+	cat > "$DEST/type-phase" <<EOF
+#!/bin/bash
+apt-get update
 apt-get -y install lubuntu-desktop
 
 apt-get install -f
 apt-get -y autoremove
 apt-get clean
 EOF
-
+		fi
 	else
 	cat > "$DEST/type-phase" <<EOF
 #!/bin/bash
 export DEBIAN_FRONTEND=noninteractive
+apt-get update
 apt-get -y install xorg xfce4 xfce4-goodies vlc network-manager-gnome
 
 apt-get -y autoremove
@@ -333,26 +364,28 @@ EOF
         rm -f "$DEST/etc/resolv.conf"
 
 	cd $BUILD
-	tar czf ${DISTRO}_desktop_rootfs.tar.gz rootfs
-	cd -
+	tar czf ${DISTRO}_${ARCH}_desktop_rootfs.tar.gz rootfs
 }
 
 server_setup()
 {
-	if [ $PLATFORM = "zero_plus2_h3" ];then
-		:
-	else
+	case ${BOARD} in  
+		"zero_plus2_h3" | "lite2")
+			;;
+		"*")
 	cat > "$DEST/etc/network/interfaces.d/eth0" <<EOF
 auto eth0
 iface eth0 inet dhcp
 EOF
-	fi
+			;;
+	esac
+
 	cat > "$DEST/etc/hostname" <<EOF
-OrangePi
+orangepi"${BOARD}"
 EOF
 	cat > "$DEST/etc/hosts" <<EOF
 127.0.0.1 localhost
-127.0.1.1 orangepi
+127.0.1.1 orangepi${BOARD}
 
 # The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -367,6 +400,24 @@ EOF
 
 	do_conffile
 	add_ssh_keygen_service
+
+	case ${BOARD} in 
+		"3" | "lite2")
+			add_bt_service
+			;;
+		"*")
+			;;
+	esac
+
+	case ${BOARD} in 
+		"3" | "lite2" | "oneplus")
+			add_audio_service
+			;;
+		"*")
+			add_audio_service
+			;;
+	esac
+
 	sed -i 's|After=rc.local.service|#\0|;' "$DEST/lib/systemd/system/serial-getty@.service"
 	rm -f "$DEST"/etc/ssh/ssh_host_*
 
@@ -377,8 +428,8 @@ EOF
 	# Create fstab
 	cat  > "$DEST/etc/fstab" <<EOF
 # <file system>	<dir>	<type>	<options>			<dump>	<pass>
-/dev/mmcblk0p1	/boot	vfat	defaults			0		2
-/dev/mmcblk0p2	/	ext4	defaults,noatime		0		1
+LABEL=BOOT	/boot	vfat	defaults			0		2
+LABEL=rootfs	/	ext4	defaults,noatime		0		1
 EOF
 
 	if [ ! -d $DEST/lib/modules ]; then
@@ -389,14 +440,11 @@ EOF
 	fi
 
 	# Install Kernel modules
-	make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS modules_install INSTALL_MOD_PATH="$DEST"
-
+	make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS modules_install INSTALL_MOD_PATH="$DEST"
 	# Install Kernel headers
-	make -C $LINUX ARCH=arm CROSS_COMPILE=$TOOLS headers_install INSTALL_HDR_PATH="$DEST/usr/local"
-	cp $EXTER/firmware $DEST/lib/ -rf
+	make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS headers_install INSTALL_HDR_PATH="$DEST/usr/local"
 
-	#rm -rf $BUILD/${DISTRO}_${IMAGETYPE}_rootfs
-	#cp -rfa $DEST $BUILD/${DISTRO}_${IMAGETYPE}_rootfs
+	cp $EXTER/common/firmware $DEST/lib/ -rf
 }
 
 build_rootfs()
@@ -404,13 +452,13 @@ build_rootfs()
 	prepare_env
 
 	if [ $TYPE = "1" ]; then
-		if [ -f $BUILD/${DISTRO}_desktop_rootfs.tar.gz ]; then
+		if [ -f $BUILD/${DISTRO}_${ARCH}_desktop_rootfs.tar.gz ]; then
 			rm -rf $DEST
-			tar zxf $BUILD/${DISTRO}_desktop_rootfs.tar.gz -C $BUILD
+			tar zxf $BUILD/${DISTRO}_${ARCH}_desktop_rootfs.tar.gz -C $BUILD
 		else
-			if [ -f $BUILD/${DISTRO}_server_rootfs.tar.gz ]; then
+			if [ -f $BUILD/${DISTRO}_${ARCH}_server_rootfs.tar.gz ]; then
 				rm -rf $DEST
-				tar zxf $BUILD/${DISTRO}_server_rootfs.tar.gz -C $BUILD
+				tar zxf $BUILD/${DISTRO}_${ARCH}_server_rootfs.tar.gz -C $BUILD
 				prepare_rootfs_desktop
 			else
 				prepare_rootfs_server
@@ -419,11 +467,10 @@ build_rootfs()
 			fi
 		fi
 		server_setup
-#		desktop_setup
 	else
-		if [ -f $BUILD/${DISTRO}_server_rootfs.tar.gz ]; then
+		if [ -f $BUILD/${DISTRO}_${ARCH}_server_rootfs.tar.gz ]; then
 			rm -rf $DEST
-			tar zxf $BUILD/${DISTRO}_server_rootfs.tar.gz -C $BUILD
+			tar zxf $BUILD/${DISTRO}_${ARCH}_server_rootfs.tar.gz -C $BUILD
 		else
 			prepare_rootfs_server
 		fi

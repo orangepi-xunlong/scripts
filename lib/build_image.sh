@@ -2,12 +2,12 @@
 
 build_image()
 {	
-	VER="v1.0"
-	IMAGENAME="OrangePi_${PLATFORM}_${OS}_${DISTRO}_${IMAGETYPE}_${KERNEL}_${VER}"
-	IMAGE="$BUILD/images/$IMAGENAME.img"
+	VER="v2.0.2"
+	IMAGENAME="OrangePi_${BOARD}_${OS}_${DISTRO}_${IMAGETYPE}_${KERNEL_NAME}_${VER}"
+	IMAGE="${BUILD}/images/$IMAGENAME.img"
 
-	if [ ! -d $BUILD/images ]; then
-		mkdir -p $BUILD/images
+	if [ ! -d ${BUILD}/images ]; then
+		mkdir -p ${BUILD}/images
 	fi
 
 	# Partition Setup
@@ -23,41 +23,56 @@ build_image()
 	dd if=/dev/zero bs=1M count=${boot_size} of=${IMAGE}1
 	mkfs.vfat -n BOOT ${IMAGE}1
 	
-	if [ $KERNELVER = "0" ]; then
-		cp -rfa $BUILD/kernel/uImage_$PLATFORM $BUILD/kernel/uImage
-		cp -rfa $EXTER/script/script.bin_$PLATFORM $BUILD/script.bin
+	case "${PLATFORM}" in
+		"OrangePiH3" | "OrangePiH6_Linux4.9")
+			boot0="${BUILD}/uboot/boot0_sdcard_${CHIP}.bin"
+			uboot="${BUILD}/uboot/u-boot-${CHIP}.bin"
+			dd if="${boot0}" conv=notrunc bs=1k seek=${boot0_position} of="${IMAGE}"
+			dd if="${uboot}" conv=notrunc bs=1k seek=${uboot_position} of="${IMAGE}"
 
-		boot0="$BUILD/uboot/boot0_sdcard_sun8iw7p1.bin"
-		uboot="$BUILD/uboot/u-boot-sun8iw7p1.bin"
-		dd if="$boot0" conv=notrunc bs=1k seek=$boot0_position of="$IMAGE"
-		dd if="$uboot" conv=notrunc bs=1k seek=$uboot_position of="$IMAGE"
+			cp -rfa ${BUILD}/kernel/uImage_${BOARD} ${BUILD}/kernel/uImage
 
-
-		# Add boot support if there
-		if [ -e "$BUILD/kernel/uImage" -a -e "$BUILD/script.bin" ]; then
-			mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
-			mcopy -sm -i ${IMAGE}1 ${BUILD}/script.bin :: || true
-		fi
-	else
-		cp -rfa $BUILD/kernel/zImage_$PLATFORM $BUILD/kernel/zImage
-		cp -rfa $EXTER/mainline/boot_files/uInitrd $BUILD/uInitrd
-		cp -rfa $EXTER/mainline/boot_files/orangepiEnv.txt $BUILD/orangepiEnv.txt
-		mkimage -C none -A arm -T script -d $EXTER/mainline/boot_files/boot.cmd $EXTER/mainline/boot_files/boot.scr
-		cp -rfa $EXTER/mainline/boot_files/boot.* $BUILD/
+			if [ "${PLATFORM}" = "OrangePiH3" ]; then
+				cp -rfa ${EXTER}/script/script.bin_$BOARD $BUILD/script.bin
+				mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
+				mcopy -sm -i ${IMAGE}1 ${BUILD}/script.bin_${BOARD} :: || true
+			elif [ "${PLATFORM}" = "OrangePiH6_Linux4.9" ]; then
+			        mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
+			        mcopy -m -i ${IMAGE}1 ${BUILD}/uboot/H6.dtb :: || true
+			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/initrd.img :: || true
+			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/orangepi"${BOARD}"/uEnv.txt :: || true
+			fi
+			;;
+		"OrangePiH3_mainline" | "OrangePiH6_mainline")
+			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/uInitrd ${BUILD}/uInitrd
+			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/orangepiEnv.txt ${BUILD}/orangepiEnv.txt
+			mkimage -C none -A arm -T script -d ${EXTER}/chips/${CHIP}/mainline/boot_file/boot.cmd ${EXTER}/chips/${CHIP}/mainline/boot_file/boot.scr
+			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/boot.* ${BUILD}/
 	
-		uboot="$BUILD/uboot/u-boot-sunxi-with-spl.bin-${PLATFORM}"
-		dd if="$uboot" conv=notrunc bs=1k seek=$boot0_position of="$IMAGE"
+			uboot="${BUILD}/uboot/u-boot-sunxi-with-spl.bin-${BOARD}"
+			dd if="$uboot" conv=notrunc bs=1k seek=$boot0_position of="$IMAGE"
 
-		# Add boot support if there
-		if [ -e "$BUILD/kernel/zImage" -a -d "$BUILD/dtb" ]; then
-			mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/zImage ::
+			if [ ${PLATFORM} = "OrangePiH6_mainline" ];then
+				cp -fa ${BUILD}/kernel/Image_${BOARD} ${BUILD}/kernel/Image
+				mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/Image ::
+			elif [ ${PLATFORM}= "OrangePiH3_mainline" ];then 
+				cp -fa ${BUILD}/kernel/zImage_${BOARD} ${BUILD}/kernel/zImage
+				cp -rfa ${EXTER}/chips/${CHIP}/mainline/boot_file/overlay ${BUILD}/dtb/
+				mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/zImage ::
+			fi
+
 			mcopy -m -i ${IMAGE}1 ${BUILD}/uInitrd :: || true
 			mcopy -m -i ${IMAGE}1 ${BUILD}/orangepiEnv.txt :: || true
 			mcopy -m -i ${IMAGE}1 ${BUILD}/boot.* :: || true
-			mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/System.map-$PLATFORM :: || true
+			mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/System.map-${BOARD} :: || true
 			mcopy -sm -i ${IMAGE}1 ${BUILD}/dtb :: || true
-		fi
-	fi
+			rm -rf ${BUILD}/dtb/overlay
+			;;
+		"*")
+			echo -e "\e[1;31m Pls select correct platform \e[0m"
+			exit 0
+			;;
+	esac
 
 	disk_size=$[(`du -s $DEST | awk 'END {print $1}'`+part_position)/1024+400+boot_size]
 
@@ -88,8 +103,8 @@ build_image()
 	dd if=${IMAGE}2 conv=notrunc oflag=append bs=1M seek=$((part_position/1024+boot_size)) of="$IMAGE"
 	rm -f ${IMAGE}2
 
-	if [ -d $BUILD/orangepi ]; then
-		rm -rf $BUILD/orangepi
+	if [ -d ${BUILD}/orangepi ]; then
+		rm -rf ${BUILD}/orangepi
 	fi 
 
 	if [ -d /media/tmp ]; then
@@ -117,7 +132,7 @@ t
 w
 EOF
 
-	cd $BUILD/images/ 
+	cd ${BUILD}/images/ 
 	rm -f ${IMAGENAME}.tar.gz
 	md5sum ${IMAGE} > ${IMAGE}.md5sum
 	tar czvf  ${IMAGENAME}.tar.gz $IMAGENAME.img*

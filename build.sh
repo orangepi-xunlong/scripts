@@ -3,27 +3,35 @@
 set -e
 
 ROOT=`pwd`
-UBOOT=$ROOT/uboot
-UBOOT=$ROOT/uboot
-BUILD=$ROOT/output
-LINUX=$ROOT/kernel
-EXTER=$ROOT/external
-SCRIPTS=$ROOT/scripts
-DEST=$BUILD/rootfs
+UBOOT="${ROOT}/uboot"
+BUILD="${ROOT}/output"
+LINUX="${ROOT}/kernel"
+EXTER="${ROOT}/external"
+SCRIPTS="${ROOT}/scripts"
+DEST="${BUILD}/rootfs"
+UBOOT_BIN="$BUILD/uboot"
+PACK_OUT="${BUILD}/pack"
 
 OS=""
+BT=""
+CHIP=""
+ARCH=""
 DISTRO=""
 ROOTFS=""
-BOOT_PATH=""
 UBOOT_PATH=""
-ROOTFS_PATH=""
+BUILD_KERNEL=""
+BUILD_MODULE=""
 
 SOURCES="CN"
 METHOD="download"
+KERNEL_NAME="linux"
 UNTAR="bsdtar -xpf"
+PLATFORM="$(basename `pwd`)"
+BOOT_PATH="/media/$(logname)/BOOT"
+ROOTFS_PATH="/media/$(logname)/rootfs"
 CORES=$((`cat /proc/cpuinfo | grep processor | wc -l` - 1))
 
-if [[ $EUID == 0 ]]; then
+if [[ "${EUID}" == 0 ]]; then
         :
 else
 	echo " "
@@ -34,84 +42,104 @@ else
 fi
 
 source "${SCRIPTS}"/lib/general.sh
+source "${SCRIPTS}"/lib/pack.sh
 source "${SCRIPTS}"/lib/compilation.sh
 source "${SCRIPTS}"/lib/distributions.sh
 source "${SCRIPTS}"/lib/build_image.sh
 
-if [ ! -d $BUILD ]; then
-    mkdir -p $BUILD
-fi
+prepare_host
 
-MENUSTR="Welcome to OrangePi Build System. Pls choose Platform."
-##########################################
-OPTION=$(whiptail --title "OrangePi Build System" \
-	--menu "$MENUSTR" 20 80 10 --cancel-button Exit --ok-button Select \
-	"0"  "OrangePi PC Plus" \
-	"1"  "OrangePi PC" \
-	"2"  "OrangePi Plus2E" \
-	"3"  "OrangePi Lite" \
-	"4"  "OrangePi One" \
-        "5"  "OrangePi 2" \
-        "6"  "OrangePi ZeroPlus2 H3" \
-        "7"  "OrangePi Plus" \
-        "8"  "OrangePi Zero" \
-        "9"  "OrangePi R1" \
-	3>&1 1>&2 2>&3)
+MENUSTR="Welcome to Orange Pi Build System. Pls choose Platform."
+#################################################################
+case "${PLATFORM}" in 
+	"OrangePiH3" | "OrangePiH3_mainline")
 
-if [ $OPTION = "0" ]; then
-	export PLATFORM="pc-plus"
-elif [ $OPTION = "1" ]; then
-	export PLATFORM="pc"
-elif [ $OPTION = "2" ]; then
-	export PLATFORM="plus2e"
-elif [ $OPTION = "3" ]; then
-	export PLATFORM="lite"
-elif [ $OPTION = "4" ]; then
-	export PLATFORM="one"
-elif [ $OPTION = "5" ]; then
-	export PLATFORM="2"
-elif [ $OPTION = "6" ]; then
-	export PLATFORM="zero_plus2_h3"
-elif [ $OPTION = "7" ]; then
-	export PLATFORM="plus"
-elif [ $OPTION = "8" ]; then
-	export PLATFORM="zero"
-elif [ $OPTION = "9" ]; then
-	export PLATFORM="r1"
-else
-	echo -e "\e[1;31m Pls select correct platform \e[0m"
-	exit 0
-fi
+		OPTION=$(whiptail --title "Orange Pi Build System" \
+			--menu "${MENUSTR}" 20 80 10 --cancel-button Exit --ok-button Select \
+			"0"  "OrangePi PC Plus" \
+			"1"  "OrangePi PC" \
+			"2"  "OrangePi Plus2E" \
+			"3"  "OrangePi Lite" \
+			"4"  "OrangePi One" \
+			"5"  "OrangePi 2" \
+			"6"  "OrangePi ZeroPlus2 H3" \
+			"7"  "OrangePi Plus" \
+			"8"  "OrangePi Zero" \
+			"9"  "OrangePi R1" \
+			3>&1 1>&2 2>&3)
 
-## prepare development tools
-if [ ! -f $BUILD/.tmp_toolchain ]; then
-	prepare_host
-	touch $BUILD/.tmp_toolchain
-fi
+		case "${OPTION}" in 
+			"0") BOARD="pc-plus" ;;
+			"1") BOARD="pc"	;;
+			"2") BOARD="plus2e" ;;
+			"3") BOARD="lite" ;;
+			"4") BOARD="one" ;;
+			"5") BOARD="2" ;;
+			"6") BOARD="zero_plus2_h3" ;;
+			"7") BOARD="plus" ;;
+			"8") BOARD="zero" ;;
+			"9") BOARD="r1" ;;
+			"*")
+			echo -e "\e[1;31m Pls select correct board \e[0m"
+			exit 0 ;;
+		esac
 
-#MENUSTR="Pls select kernel version"
-#KERNELVER=$(whiptail --title "OrangePi Build System" \
-#        --menu "$MENUSTR" 20 60 3 --cancel-button Finish --ok-button Select \
-#        "0"   "Linux3.4.113" \
-#        "1"   "Linux5.3.5" \
-#        3>&1 1>&2 2>&3)
+		if [ "${PLATFORM}" = "OrangePiH3" ]; then
+			TOOLS=$ROOT/toolchain/gcc-linaro-1.13.1-2012.02-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-
+			UBOOT_COMPILE="${TOOLS}"
+			KERNEL_NAME="linux3.4.113"
+		elif [ "${PLATFORM}" = "OrangePiH3_mainline" ]; then
+			TOOLS=$ROOT/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-
+			UBOOT_COMPILE="${TOOLS}"
+			KERNEL_NAME="linux5.3.5"
+		fi
 
-#Todo
-if [ -d $LINUX/certs ]; then
-	KERNELVER=1
-else
-	KERNELVER=0
-fi
+		ARCH="arm"
+		CHIP="sun8iw7p1";
+		CHIP_BOARD="dolphin-p1"
+		;;
+	"OrangePiH6" | "OrangePiH6_Linux4.9" | "OrangePiH6_mainline")
+	
+		OPTION=$(whiptail --title "Orange Pi Build System" \
+		        --menu "$MENUSTR" 15 60 5 --cancel-button Exit --ok-button Select \
+		        "0"  "OrangePi 3" \
+		        "1"  "OrangePi Lite2" \
+		        "2"  "OrangePi OnePlus" \
+		        "3"  "OrangePi Zero2" \
+		        3>&1 1>&2 2>&3)
 
-if [ $KERNELVER = "0" ]; then
-	TOOLS=$ROOT/toolchain/gcc-linaro-1.13.1-2012.02-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-
-	KERNEL="linux3.4.113"
-	#LINUX=$ROOT/linux_3.4.113
-	#UBOOT=$ROOT/uboot_201109
-else
-	TOOLS=$ROOT/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-
-	KERNEL="linux5.3.5"
-fi
+		case "${OPTION}" in 
+			"0") BOARD="3" ;;
+			"1") BOARD="lite2" ;;
+			"2") BOARD="oneplus" ;;
+			"3") BOARD="zero2" ;;
+			"*") 
+			echo -e "\e[1;31m Pls select correct board \e[0m"
+			exit 0 ;;
+		esac
+
+		ARCH="arm64"
+		CHIP="sun50iw6p1"
+		CHIP_BOARD="petrel-p1"
+		CHIP_FILE="${EXTER}"/chips/"${CHIP}"
+		TOOLS=$ROOT/toolchain/gcc-linaro-4.9-2015.01-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+		UBOOT_COMPILE=$ROOT/toolchain/gcc-linaro-4.9-2015.01-x86_64_aarch64-linux-gnu/gcc-linaro/bin/arm-linux-gnueabi-
+
+		if [ "${PLATFORM}" = "OrangePiH6" ]; then
+			KERNEL_NAME="linux3.10"
+		elif [ "${PLATFORM}" = "OrangePiH6_Linux4.9" ]; then
+			KERNEL_NAME="linux4.9.118"
+		elif [ "${PLATFORM}" = "OrangePiH6_mainline" ]; then
+			KERNEL_NAME="linux5.3.5"
+			TOOLS=$ROOT/toolchain/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+			UBOOT_COMPILE="${TOOLS}"
+		fi
+		;;
+	"*")
+		echo -e "\e[1;31m Pls select correct platform \e[0m"
+		exit 0
+		;;
+esac
 
 MENUSTR="Pls select build option"
 OPTION=$(whiptail --title "OrangePi Build System" \
@@ -120,124 +148,52 @@ OPTION=$(whiptail --title "OrangePi Build System" \
 	"1"   "Build Rootfs" \
 	"2"   "Build Uboot" \
 	"3"   "Build Linux" \
-	"4"   "Build Kernel only" \
-	"5"   "Build Module only" \
-	"6"   "Update kernel Image" \
-	"7"   "Update Module" \
-	"8"   "Update Uboot" \
+	"4"   "Build Module only" \
+	"5"   "Update Kernel Image" \
+	"6"   "Update Module" \
+	"7"   "Update Uboot" \
 	3>&1 1>&2 2>&3)
 
-if [ $OPTION = "0" -o $OPTION = "1" ]; then
-	TMP=$OPTION
-	TMP_DISTRO=""
-
-SelectDistro()
-{
-	MENUSTR="Distro Options"
-	OPTION=$(whiptail --title "OrangePi Build System" \
-		--menu "$MENUSTR" 20 60 10 --cancel-button Finish --ok-button Select \
-		"0"   "[$SOURCES]Change repository server" \
-		"1"   "Ubuntu Xenial" \
-		"2"   "Debian Stretch" \
-		3>&1 1>&2 2>&3)
-        if [ $OPTION = "0" ]; then
-                SelectSources
-        elif [ $OPTION = "1" ]; then
-                TMP_DISTRO="xenial"
-		OS="ubuntu"
-        elif [ $OPTION = "2" ]; then
-                TMP_DISTRO="stretch"
-		OS="debian"
-        fi
-}
-
-SelectSources()
-{
-	SOURCES=$(whiptail --title "Repository Server" --nocancel --radiolist \
-	        "What is the repository server of your choice?" 20 60 5 \
-	        "CN" "The server from China." ON \
-	        "CDN" "Deafult CDN repository server(RCMD)." OFF \
-	        "OFCL" "Official repository server." OFF 3>&1 1>&2 2>&3)
-	exitstatus=$?
-	if [ $exitstatus = 0 ]; then
-		echo "The chosen server is:" $SOURCES
-		SelectDistro
-	fi
-}
-	SelectDistro
-        DISTRO=$TMP_DISTRO
-
-        TYPE=$(whiptail --title "OrangePi Build System" \
-                --menu "$MENUSTR" 20 60 3 --cancel-button Finish --ok-button Select \
-                "0"   "Server" \
-                "1"   "Desktop" \
-                3>&1 1>&2 2>&3)
-	
-	if [ ${TYPE} = "1" ]; then
-        	IMAGETYPE="desktop"
-	else
-        	IMAGETYPE="server"
-	fi
-	
-	if [ $KERNELVER = 0 ]; then
-        	if [ ! -f $BUILD/kernel/uImage_$PLATFORM ]; then
-                	BUILD_KERNEL=1
-			compile_kernel
-        	fi
-	else
-        	if [ ! -f $BUILD/kernel/zImage_$PLATFORM ]; then
-                	BUILD_KERNEL=1
-			compile_kernel
-        	fi
-	fi
-
-	if [ $KERNELVER = 0 ]; then
-        	if [ ! -f $BUILD/uboot/boot0_sdcard_sun8iw7p1.bin ]; then
-			compile_uboot
-        	fi
-	else
-        	if [ ! -f $BUILD/uboot/u-boot-sunxi-with-spl.bin-${PLATFORM} ]; then
-			compile_uboot
-        	fi
-	fi
-
-
-        if [ $TMP = "0" ]; then
+case "${OPTION}" in 
+	"0")
+		select_distro
+		compile_uboot
+		compile_kernel
 		build_rootfs
 		build_image 
 
 		whiptail --title "OrangePi Build System" --msgbox "Succeed to build Image" \
-                               10 40 0 --ok-button Continue
-	else
+			10 40 0 --ok-button Continue
+		;;
+	"1")
+		select_distro
 		build_rootfs
-
 		whiptail --title "OrangePi Build System" --msgbox "Succeed to build rootfs" \
-                               10 40 0 --ok-button Continue
-        fi
-elif [ $OPTION = "2" ]; then
-	compile_uboot
-elif [ $OPTION = "3" ]; then
-	BUILD_KERNEL=1
-	BUILD_MODULE=1
-	compile_kernel
-elif [ $OPTION = "4" ]; then
-	BUILD_KERNEL=1
-	BUILD_MODULE=0
-	compile_kernel
-elif [ $OPTION = "5" ]; then
-	BUILD_KERNEL=0
-	BUILD_MODULE=1
-	compile_kernel
-elif [ $OPTION = "6" ]; then
-	boot_check
-	kernel_update
-elif [ $OPTION = '7' ]; then
-	rootfs_check
-	modules_update
-elif [ $OPTION = '8' ]; then
-	uboot_check
-	uboot_update
-else
-	whiptail --title "OrangePi Build System" \
-		--msgbox "Pls select correct option" 10 50 0
-fi
+			10 40 0 --ok-button Continue
+		;;
+	"2")	
+		compile_uboot
+		;;
+	"3")
+		compile_kernel
+		;;
+	"4")
+		compile_module
+		;;
+	"5")
+		#boot_check
+		kernel_update
+		;;
+	"6")
+		#rootfs_check
+		modules_update
+		;;
+	"7")
+		uboot_check
+		uboot_update
+		;;
+	"*")
+		whiptail --title "OrangePi Build System" \
+			--msgbox "Pls select correct option" 10 50 0
+		;;
+esac

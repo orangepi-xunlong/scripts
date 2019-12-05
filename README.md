@@ -1,2 +1,1 @@
-# OrangePiH3_scripts
-The scripts for OrangePi H3
+The scripts for Orange Pi Linux SDK
