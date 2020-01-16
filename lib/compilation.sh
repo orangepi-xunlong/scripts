@@ -31,7 +31,7 @@ compile_uboot()
 				"3")
 					cp include/configs/${CHIP}.h.emmc include/configs/${CHIP}.h
 					cp ${EXTER}/chips/${CHIP}/emmc.patch ${UBOOT}/
-					patch -p1 < emmc.patch
+					patch -p1 < emmc.patch 1>/dev/null 2>&1
 					make -j${CORES} CROSS_COMPILE="${UBOOT_COMPILE}" 1>/dev/null 2>&1
 					make spl -j${CORES} CROSS_COMPILE="${UBOOT_COMPILE}" 1>/dev/null 2>&1
 					git checkout .

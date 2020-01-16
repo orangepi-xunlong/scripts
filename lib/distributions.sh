@@ -74,6 +74,8 @@ do_conffile() {
         cp $EXTER/common/rootfs/sshd_config $DEST/etc/ssh/ -f
         cp $EXTER/common/rootfs/networking.service $DEST/lib/systemd/system/networking.service -f
         cp $EXTER/common/rootfs/profile_for_root $DEST/root/.profile -f
+        cp $EXTER/common/rootfs/cpu.sh $DEST/usr/local/sbin/ -f
+
         chmod +x $DEST/usr/local/sbin/*
 }
 
@@ -132,6 +134,32 @@ RemainAfterExit=yes
 WantedBy=ssh.service
 EOF
 	do_chroot systemctl enable ssh-keygen
+}
+
+add_opi_python_gpio_libs() {
+        cp $EXTER/common/OPi.GPIO $DEST/usr/local/sbin/ -rfa
+
+        cat > "$DEST/install_opi_gpio" <<EOF
+#!/bin/bash
+
+apt-get install -y python3-pip python3-setuptools
+cd /usr/local/sbin/OPi.GPIO
+python3 setup.py install
+EOF
+        chmod +x "$DEST/install_opi_gpio"
+        do_chroot /install_opi_gpio
+	rm $DEST/install_opi_gpio
+
+	cp ${BOARD_FILE}/orangepi"${BOARD}"/test_gpio.py $DEST/usr/local/sbin/ -f
+}
+
+add_opi_config_libs() {
+	do_chroot apt-get install -y dialog expect bc cpufrequtils figlet toilet
+        cp $EXTER/common/opi_config_libs $DEST/usr/local/sbin/ -rfa
+        cp $EXTER/common/opi_config_libs/opi-config $DEST/usr/local/sbin/ -rfa
+
+	rm -rf $DEST/etc/update-motd.d/* 
+        cp $EXTER/common/rootfs/update-motd.d/* $DEST/etc/update-motd.d/ -rf
 }
 
 add_debian_apt_sources() {
@@ -400,6 +428,8 @@ EOF
 
 	do_conffile
 	add_ssh_keygen_service
+	add_opi_python_gpio_libs
+	add_opi_config_libs
 
 	case ${BOARD} in 
 		"3" | "lite2")

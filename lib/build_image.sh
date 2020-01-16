@@ -2,7 +2,7 @@
 
 build_image()
 {	
-	VER="v2.0.2"
+	VER="v2.0.3"
 	IMAGENAME="OrangePi_${BOARD}_${OS}_${DISTRO}_${IMAGETYPE}_${KERNEL_NAME}_${VER}"
 	IMAGE="${BUILD}/images/$IMAGENAME.img"
 
