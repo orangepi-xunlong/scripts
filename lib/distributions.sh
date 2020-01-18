@@ -162,6 +162,20 @@ add_opi_config_libs() {
         cp $EXTER/common/rootfs/update-motd.d/* $DEST/etc/update-motd.d/ -rf
 }
 
+add_opi_wallpaper() {
+	set -x
+	WPDIR="$DEST/usr/share/xfce4/backdrops/"
+
+	if [ $TYPE = "1" -o -d $DEST/usr/share/xfce4/backdrops ]; then
+		cp $EXTER/common/rootfs/orangepi*.jpg ${WPDIR} -f
+		cd ${WPDIR}
+		rm -f xubuntu-wallpaper.png
+		ln -sv orangepi1.jpg xubuntu-wallpaper.png 
+		cd -
+	fi
+	set +x
+}
+
 add_debian_apt_sources() {
 	local release="$1"
 	local aptsrcfile="$DEST/etc/apt/sources.list"
@@ -430,6 +444,7 @@ EOF
 	add_ssh_keygen_service
 	add_opi_python_gpio_libs
 	add_opi_config_libs
+	add_opi_wallpaper
 
 	case ${BOARD} in 
 		"3" | "lite2")
