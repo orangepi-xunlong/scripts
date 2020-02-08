@@ -268,15 +268,15 @@ prepare_env()
 			ROOTFS="${DISTRO}-base-${ARCH}.tar.gz"
 			METHOD="debootstrap"
 			case $SOURCES in
-#		                "CDN")
-#		                        SOURCES="http://httpredir.debian.org/debian"
-#		                        ;;
+		                "CDN")
+		                        SOURCES="http://httpredir.debian.org/debian"
+		                        ;;
 		                "OFCL")
 		                        SOURCES="http://ftp.debian.org/debian"
 		                        ;;
-#		                "CN")
-#		                        SOURCES="http://ftp.cn.debian.org/debian"
-#		                        ;;
+		                "CN")
+		                        SOURCES="http://ftp.cn.debian.org/debian"
+		                        ;;
 				*)
 					SOURCES="http://httpredir.debian.org/debian"
 		                        ;;
