@@ -264,19 +264,19 @@ prepare_env()
 					;;
 			esac
 			;;
-		stretch)
+		buster)
 			ROOTFS="${DISTRO}-base-${ARCH}.tar.gz"
 			METHOD="debootstrap"
 			case $SOURCES in
-		                "CDN")
-		                        SOURCES="http://httpredir.debian.org/debian"
-		                        ;;
+#		                "CDN")
+#		                        SOURCES="http://httpredir.debian.org/debian"
+#		                        ;;
 		                "OFCL")
 		                        SOURCES="http://ftp.debian.org/debian"
 		                        ;;
-		                "CN")
-		                        SOURCES="http://ftp.cn.debian.org/debian"
-		                        ;;
+#		                "CN")
+#		                        SOURCES="http://ftp.cn.debian.org/debian"
+#		                        ;;
 				*)
 					SOURCES="http://httpredir.debian.org/debian"
 		                        ;;
@@ -322,7 +322,7 @@ prepare_rootfs_server()
 		"xenial" | "bionic")
 			EXTRADEBS="software-properties-common libjpeg8-dev usbmount ubuntu-minimal"
 			;;
-		"sid" | "stretch" | "stable")
+		"sid" | "buster" | "stable")
 			EXTRADEBS="sudo net-tools g++ libjpeg-dev" 
 			;;
 		"*")	
