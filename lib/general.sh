@@ -182,7 +182,7 @@ select_distro()
                 "0"   "[$SOURCES]Change repository server" \
                 "1"   "Ubuntu Xenial" \
 		"2"   "Ubuntu Bionic(WIP)" \
-                "3"   "Debian Stretch" \
+                "3"   "Debian Buster" \
                 3>&1 1>&2 2>&3)
 
 		case "${OPTION}" in
@@ -200,7 +200,7 @@ select_distro()
 	                     	OS="ubuntu"
 				;;
 		 	"3")     
-	                	DISTRO="stretch"
+	                	DISTRO="Buster"
 	                	OS="debian"
 				;;
 			"*")
