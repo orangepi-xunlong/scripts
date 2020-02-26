@@ -201,10 +201,10 @@ prepare_env()
 		                        SOURCES="http://httpredir.debian.org/debian"
 		                        ;;
 		                "OFCL")
-		                        SOURCES="http://ftp2.debian.org/debian"
+		                        SOURCES="http://ftp.debian.org/debian"
 		                        ;;
 		                "CN")
-		                        SOURCES="http://ftp2.cn.debian.org/debian"
+		                        SOURCES="http://ftp.cn.debian.org/debian"
 		                        ;;
 				*)
 					SOURCES="http://httpredir.debian.org/debian"
