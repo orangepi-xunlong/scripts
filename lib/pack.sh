@@ -2,9 +2,9 @@
 
 function do_prepare()
 {
-	TOOLS_DIR="${EXTER}/chips/sun50iw6p1/pack/tools"
-	FILE="${EXTER}/chips/sun50iw6p1/pack/bin"
-	SYS_CONFIG="${EXTER}/chips/sun50iw6p1/sys_config/sys_config_orangepi_${BOARD}.fex"
+	TOOLS_DIR="${EXTER}/chips/${CHIP}/pack/tools"
+	FILE="${EXTER}/chips/${CHIP}/pack/bin"
+	SYS_CONFIG="${EXTER}/chips/${CHIP}/sys_config/sys_config_orangepi_${BOARD}.fex"
 
 	PATH=${TOOLS_DIR}:$PATH
 
@@ -39,7 +39,6 @@ function do_prepare()
 
 function do_ini_to_dts()
 {
-	local DTC_COMPILER=${LINUX}/scripts/dtc/dtc
 	local DTC_SRC_PATH=${LINUX}/arch/$ARCH/boot/dts/sunxi/
 	local DTC_INI_FILE_BASE=${SYS_CONFIG}
 	local DTC_INI_FILE=${BUILD}/sys_config_fix.fex
@@ -47,7 +46,7 @@ function do_ini_to_dts()
 	cp $DTC_INI_FILE_BASE $DTC_INI_FILE
 	sed -i "s/\(\[dram\)_para\(\]\)/\1\2/g" $DTC_INI_FILE
 	sed -i "s/\(\[nand[0-9]\)_para\(\]\)/\1\2/g" $DTC_INI_FILE
-	DTC_SRC_FILE=${EXTER}/chips/sun50iw6p1/pack/bin/dtc_src_file
+	DTC_SRC_FILE=${EXTER}/chips/${CHIP}/pack/bin/dtc_src_file
 
 	dtc_alph -O dtb -o ${BUILD}/sunxi.dtb	\
 		-b 0			\
@@ -89,7 +88,12 @@ function do_common()
 	update_uboot_v2 u-boot.fex sys_config.bin ${CHIP_BOARD} 1>/dev/null 2>&1
 
 	# Copy dtb
-	cp ${PACK_OUT}/sunxi.fex ${BUILD}/uboot/H6.dtb
+	if [ ${PLATFORM} = "OrangePiH6" ]; then
+		cp ${PACK_OUT}/sunxi.fex ${BUILD}/uboot/H6.dtb
+	elif [ ${PLATFORM} = "OrangePiH5" ]; then
+		cp ${PACK_OUT}/sunxi.fex ${BUILD}/uboot/H5.dtb
+	fi
+
         cp ${PACK_OUT}/boot0_sdcard.fex ${BUILD}/uboot/boot0_sdcard_${CHIP}.bin
         cp ${PACK_OUT}/boot_package.fex ${BUILD}/uboot/u-boot-${CHIP}.bin
 

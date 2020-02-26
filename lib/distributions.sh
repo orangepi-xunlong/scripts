@@ -51,7 +51,7 @@ do_conffile() {
 	BOARD_FILE="$EXTER/chips/${CHIP}"
 	
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiH6_Linux4.9")
+		"OrangePiH3" | "OrangePiH5" | "OrangePiH6_Linux4.9")
 	       	 	cp ${BOARD_FILE}/boot_emmc/* $DEST/opt/boot/ -f
 	        	cp ${BOARD_FILE}/resize_rootfs.sh $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/install_to_emmc $DEST/usr/local/sbin/install_to_emmc -f
@@ -65,7 +65,7 @@ do_conffile() {
 	       	 	cp ${BOARD_FILE}/mainline/orangepi"${BOARD}"/sbin/* $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/mainline/orangepi"${BOARD}"/modules.conf $DEST/etc/modules-load.d/ -f
 			;;
-		"*")	
+		*)	
 		        echo -e "\e[1;31m Pls select correct platform \e[0m"
 		        exit 0
 			;;
@@ -142,6 +142,7 @@ add_opi_python_gpio_libs() {
         cat > "$DEST/install_opi_gpio" <<EOF
 #!/bin/bash
 
+apt remove -y blueman
 apt-get install -y python3-pip python3-setuptools
 cd /usr/local/sbin/OPi.GPIO
 python3 setup.py install
@@ -163,7 +164,6 @@ add_opi_config_libs() {
 }
 
 add_opi_wallpaper() {
-	set -x
 	WPDIR="$DEST/usr/share/xfce4/backdrops/"
 
 	if [ $TYPE = "1" -o -d $DEST/usr/share/xfce4/backdrops ]; then
@@ -173,7 +173,6 @@ add_opi_wallpaper() {
 		ln -sv orangepi1.jpg xubuntu-wallpaper.png 
 		cd -
 	fi
-	set +x
 }
 
 add_debian_apt_sources() {
@@ -253,8 +252,8 @@ prepare_env()
 					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
 				"CN")
-				        SOURCES="http://mirrors.aliyun.com/ubuntu-ports"
-		                        #SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
+				        #SOURCES="http://mirrors.aliyun.com/ubuntu-ports"
+		                        SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
 				        #SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
 					ROOTFS="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
@@ -320,12 +319,12 @@ prepare_rootfs_server()
 
 	case "${DISTRO}" in
 		"xenial" | "bionic")
-			EXTRADEBS="software-properties-common libjpeg8-dev usbmount ubuntu-minimal"
+			EXTRADEBS="software-properties-common libjpeg8-dev usbmount ubuntu-minimal ifupdown"
 			;;
 		"sid" | "stretch" | "stable")
 			EXTRADEBS="sudo net-tools g++ libjpeg-dev" 
 			;;
-		"*")	
+		*)	
 			echo "Unknown DISTRO=$DISTRO"
 			exit 2
 			;;
@@ -366,6 +365,8 @@ EOF
 prepare_rootfs_desktop()
 {
 	cp /etc/resolv.conf "$DEST/etc/resolv.conf"
+	add_${OS}_apt_sources $DISTRO
+
 	if [ $DISTRO = "xenial" ]; then
 		if [ ${ARCH} = "arm64" ];then
 	cat > "$DEST/type-phase" <<EOF
@@ -411,23 +412,17 @@ EOF
 
 server_setup()
 {
-	case ${BOARD} in  
-		"zero_plus2_h3" | "lite2")
-			;;
-		"*")
-	cat > "$DEST/etc/network/interfaces.d/eth0" <<EOF
-auto eth0
-iface eth0 inet dhcp
-EOF
-			;;
-	esac
+#	cat > "$DEST/etc/network/interfaces.d/eth0" <<EOF
+#auto eth0
+#iface eth0 inet dhcp
+#EOF
 
 	cat > "$DEST/etc/hostname" <<EOF
-orangepi"${BOARD}"
+orangepi$BOARD
 EOF
 	cat > "$DEST/etc/hosts" <<EOF
 127.0.0.1 localhost
-127.0.1.1 orangepi${BOARD}
+127.0.1.1 orangepi$BOARD
 
 # The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -444,22 +439,22 @@ EOF
 	add_ssh_keygen_service
 	add_opi_python_gpio_libs
 	add_opi_config_libs
-	add_opi_wallpaper
+#	add_opi_wallpaper
 
 	case ${BOARD} in 
-		"3" | "lite2")
+		"3" | "lite2" | "zeroplus2h5")
 			add_bt_service
 			;;
-		"*")
+		*)
 			;;
 	esac
 
 	case ${BOARD} in 
-		"3" | "lite2" | "oneplus")
+		"3" | "lite2" | "oneplus" | "pc2" | "prime" | "zeroplus" \
+	       	    | "zeroplus2h5")
 			add_audio_service
 			;;
-		"*")
-			add_audio_service
+		*)
 			;;
 	esac
 

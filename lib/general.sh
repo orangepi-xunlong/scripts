@@ -121,7 +121,7 @@ kernel_update()
 			cp -rf $KERNEL_IMAGE $BOOT_PATH/Image
 			cp -rf $BUILD/dtb/allwinner $BOOT_PATH/
 			;;
-		"*")
+		*)
 			;;
 	esac
 
@@ -164,7 +164,7 @@ uboot_update()
 			uboot=$BUILD/uboot/u-boot-sunxi-with-spl.bin-${BOARD}
 			dd if=$uboot of=$UBOOT_PATH conv=notrunc bs=1k seek=8
 			;;
-		"*")
+		*)
 			;;
 	esac
 
@@ -203,7 +203,7 @@ select_distro()
 	                	DISTRO="stretch"
 	                	OS="debian"
 				;;
-			"*")
+			*)
 				;;
 		esac
 			
@@ -218,7 +218,7 @@ select_distro()
 				IMAGETYPE="server" ;;
                         "1") 
 				IMAGETYPE="desktop" ;;
-                        "*") 
+                        *) 
 				;;
                esac
 }

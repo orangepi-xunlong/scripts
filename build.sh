@@ -18,6 +18,7 @@ CHIP=""
 ARCH=""
 DISTRO=""
 ROOTFS=""
+IMAGETYPE=""
 UBOOT_PATH=""
 BUILD_KERNEL=""
 BUILD_MODULE=""
@@ -29,7 +30,8 @@ UNTAR="bsdtar -xpf"
 PLATFORM="$(basename `pwd`)"
 BOOT_PATH="/media/$(logname)/BOOT"
 ROOTFS_PATH="/media/$(logname)/rootfs"
-CORES=$((`cat /proc/cpuinfo | grep processor | wc -l` - 1))
+
+CORES=$(nproc --ignore=1)
 
 if [[ "${EUID}" == 0 ]]; then
         :
@@ -79,9 +81,9 @@ case "${PLATFORM}" in
 			"7") BOARD="plus" ;;
 			"8") BOARD="zero" ;;
 			"9") BOARD="r1" ;;
-			"*")
+			*)
 			echo -e "\e[1;31m Pls select correct board \e[0m"
-			exit 0 ;;
+			exit 2 ;;
 		esac
 
 		if [ "${PLATFORM}" = "OrangePiH3" ]; then
@@ -98,6 +100,34 @@ case "${PLATFORM}" in
 		CHIP="sun8iw7p1";
 		CHIP_BOARD="dolphin-p1"
 		;;
+	"OrangePiH5")
+	
+		OPTION=$(whiptail --title "Orange Pi Build System" \
+		        --menu "$MENUSTR" 15 60 5 --cancel-button Exit --ok-button Select \
+			"0"  "OrangePi PC2" \
+			"1"  "OrangePi Prime" \
+			"2"  "OrangePi Zero Plus" \
+			"3"  "OrangePi Zero Plus2 H5" \
+		        3>&1 1>&2 2>&3)
+
+		case "${OPTION}" in 
+			"0") BOARD="pc2" ;;
+			"1") BOARD="prime" ;;
+			"2") BOARD="zeroplus" ;;
+			"3") BOARD="zeroplus2h5" ;;
+			*) 
+			echo -e "\e[1;31m Pls select correct board \e[0m"
+			exit 2 ;;
+		esac
+
+		ARCH="arm64"
+		CHIP="sun50iw2p1"
+		CHIP_BOARD="cheetah-p1"
+		CHIP_FILE="${EXTER}"/chips/"${CHIP}"
+		TOOLS=$ROOT/toolchain/gcc-linaro-4.9-2015.01-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+		UBOOT_COMPILE=$ROOT/toolchain/gcc-linaro-4.9-2015.01-x86_64_aarch64-linux-gnu/gcc-linaro/bin/arm-linux-gnueabi-
+		KERNEL_NAME="linux3.10"
+		;;
 	"OrangePiH6" | "OrangePiH6_Linux4.9" | "OrangePiH6_mainline")
 	
 		OPTION=$(whiptail --title "Orange Pi Build System" \
@@ -113,9 +143,9 @@ case "${PLATFORM}" in
 			"1") BOARD="lite2" ;;
 			"2") BOARD="oneplus" ;;
 			"3") BOARD="zero2" ;;
-			"*") 
+			*) 
 			echo -e "\e[1;31m Pls select correct board \e[0m"
-			exit 0 ;;
+			exit 2 ;;
 		esac
 
 		ARCH="arm64"
@@ -135,7 +165,7 @@ case "${PLATFORM}" in
 			UBOOT_COMPILE="${TOOLS}"
 		fi
 		;;
-	"*")
+	*)
 		echo -e "\e[1;31m Pls select correct platform \e[0m"
 		exit 0
 		;;
@@ -181,18 +211,16 @@ case "${OPTION}" in
 		compile_module
 		;;
 	"5")
-		#boot_check
 		kernel_update
 		;;
 	"6")
-		#rootfs_check
 		modules_update
 		;;
 	"7")
 		uboot_check
 		uboot_update
 		;;
-	"*")
+	*)
 		whiptail --title "OrangePi Build System" \
 			--msgbox "Pls select correct option" 10 50 0
 		;;

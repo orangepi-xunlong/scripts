@@ -22,42 +22,42 @@ compile_uboot()
 	echo -e "\e[1;31m Build U-boot \e[0m"
 
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiH6" | "OrangePiH6_Linux4.9")
-			if [ ! -f $UBOOT/u-boot-"${CHIP}".bin -o ! -f $UBOOT/boot0_sdcard_"${CHIP}".bin ]; then
-				make "${CHIP}"_config 
-			fi
+		"OrangePiH3" | "OrangePiH5" | "OrangePiH6" | "OrangePiH6_Linux4.9")
+			make "${CHIP}"_config 
 
 			case "${BOARD}" in 
-				"3")
+				"3" | "zeroplus2h5")
 					cp include/configs/${CHIP}.h.emmc include/configs/${CHIP}.h
-					cp ${EXTER}/chips/${CHIP}/emmc.patch ${UBOOT}/
-					patch -p1 < emmc.patch 1>/dev/null 2>&1
-					make -j${CORES} CROSS_COMPILE="${UBOOT_COMPILE}" 1>/dev/null 2>&1
-					make spl -j${CORES} CROSS_COMPILE="${UBOOT_COMPILE}" 1>/dev/null 2>&1
+					if [ ${BOARD} = "3" ]; then
+						cp ${EXTER}/chips/${CHIP}/emmc.patch ${UBOOT}/
+						patch -p1 < emmc.patch 1>/dev/null 2>&1
+					fi
+					make -j${CORES} CROSS_COMPILE="${UBOOT_COMPILE}"
+					make spl CROSS_COMPILE="${UBOOT_COMPILE}" 1>/dev/null 2>&1
 					git checkout .
 					pack
 
 		       			cp ${BUILD}/uboot/boot0_sdcard_${CHIP}.bin ${EXTER}/chips/${CHIP}/boot_emmc/boot0.bin
 		        		cp ${BUILD}/uboot/u-boot-${CHIP}.bin ${EXTER}/chips/${CHIP}/boot_emmc/uboot.bin
 					;;
-				"*")
+				*)
 					;;
 			esac
 
 			cd $UBOOT
 			cp include/configs/${CHIP}.h.tf include/configs/${CHIP}.h
 			make -j${CORES} CROSS_COMPILE="${UBOOT_COMPILE}"
-			make spl -j${CORES} CROSS_COMPILE="${UBOOT_COMPILE}"
+			make spl CROSS_COMPILE="${UBOOT_COMPILE}" 
 			pack
 			;;
 		"OrangePiH3_mainline" | "OrangePiH6_mainline")
 			cp ${EXTER}/chips/${CHIP}/mainline/bl31.bin ${UBOOT}/
 			make orangepi_"${BOARD}"_defconfig
-			make -j4 ARCH=arm CROSS_COMPILE="${UBOOT_COMPILE}"
+			make -j${CORES} ARCH=arm CROSS_COMPILE="${UBOOT_COMPILE}"
 
 			cp "$UBOOT"/u-boot-sunxi-with-spl.bin "$UBOOT_BIN"/u-boot-sunxi-with-spl.bin-"${BOARD}" -f
 			;;
-		"*")
+		*)
 	        	echo -e "\e[1;31m Pls select correct platform \e[0m"
 	        	exit 0
 			;;
@@ -86,7 +86,7 @@ compile_kernel()
 			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS -j${CORES} uImage
 			cp $LINUX/arch/"${ARCH}"/boot/uImage $BUILD/kernel/uImage_$BOARD
 			;;
-		"OrangePiH6" | "OrangePiH6_Linux4.9")
+		"OrangePiH5" | "OrangePiH6" | "OrangePiH6_Linux4.9")
 			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS "orangepi_${BOARD}"_defconfig
 			echo -e "\e[1;31m Using "orangepi_${BOARD}"_defconfig\e[0m"
 			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS -j${CORES} Image
@@ -121,7 +121,7 @@ compile_kernel()
 
 			cp $LINUX/System.map $BUILD/kernel/System.map-$BOARD
 			;;
-		"*")
+		*)
 	        	echo -e "\e[1;31m Pls select correct platform \e[0m"
 			exit 0
 	esac

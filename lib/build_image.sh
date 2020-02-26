@@ -2,7 +2,7 @@
 
 build_image()
 {	
-	VER="v2.0.3"
+	VER="v2.0.4"
 	IMAGENAME="OrangePi_${BOARD}_${OS}_${DISTRO}_${IMAGETYPE}_${KERNEL_NAME}_${VER}"
 	IMAGE="${BUILD}/images/$IMAGENAME.img"
 
@@ -24,7 +24,7 @@ build_image()
 	mkfs.vfat -n BOOT ${IMAGE}1
 	
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiH6_Linux4.9")
+		"OrangePiH3" | "OrangePiH5" | "OrangePiH6_Linux4.9")
 			boot0="${BUILD}/uboot/boot0_sdcard_${CHIP}.bin"
 			uboot="${BUILD}/uboot/u-boot-${CHIP}.bin"
 			dd if="${boot0}" conv=notrunc bs=1k seek=${boot0_position} of="${IMAGE}"
@@ -39,6 +39,11 @@ build_image()
 			elif [ "${PLATFORM}" = "OrangePiH6_Linux4.9" ]; then
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/uboot/H6.dtb :: || true
+			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/initrd.img :: || true
+			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/orangepi"${BOARD}"/uEnv.txt :: || true
+			elif [ "${PLATFORM}" = "OrangePiH5" ]; then
+			        mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
+			        mcopy -m -i ${IMAGE}1 ${BUILD}/uboot/H5.dtb :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/initrd.img :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/orangepi"${BOARD}"/uEnv.txt :: || true
 			fi
@@ -68,7 +73,7 @@ build_image()
 			mcopy -sm -i ${IMAGE}1 ${BUILD}/dtb :: || true
 			rm -rf ${BUILD}/dtb/overlay
 			;;
-		"*")
+		*)
 			echo -e "\e[1;31m Pls select correct platform \e[0m"
 			exit 0
 			;;
