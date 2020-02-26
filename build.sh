@@ -21,7 +21,7 @@ ROOTFS_PATH=""
 SOURCES="CN"
 METHOD="download"
 UNTAR="bsdtar -xpf"
-CORES=$((`cat /proc/cpuinfo | grep processor | wc -l` - 1))
+CORES=$(nproc --ignore=1)
 
 if [[ $EUID == 0 ]]; then
         :
