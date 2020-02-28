@@ -1,4 +1,8 @@
-### This repository holds scripts for compiling the Orange Pi images, which are currently supported on several chip platforms:
+### What this repository does?
+
+- This repository holds scripts for compiling the Orange Pi images
+
+### Support situation
 
 - **ALLwinner H2+/H3**
   
