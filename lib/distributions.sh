@@ -442,7 +442,7 @@ EOF
 #	add_opi_wallpaper
 
 	case ${BOARD} in 
-		"3" | "lite2" | "zeroplus2h5")
+		"3" | "lite2" | "zeroplus2h5" | "prime")
 			add_bt_service
 			;;
 		*)
