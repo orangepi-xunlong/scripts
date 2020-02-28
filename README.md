@@ -2,6 +2,8 @@
 
 - This repository holds scripts for compiling the Orange Pi images
 
+- Please use [OrangePi_Build](https://github.com/orangepi-xunlong/OrangePi_Build) to download the full SDK that contains this repository
+
 ### Support situation
 
 - **ALLwinner H2+/H3**
