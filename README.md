@@ -1,23 +1,41 @@
 ### This repository holds scripts for compiling the Orange Pi images, which are currently supported on several chip platforms:
 
-- **ALLwinner H2+**
+- **ALLwinner H2+/H3**
   
-    - linux 3.4
+    - kernel 
+      
+       - linux 3.4.113
     
-    - linux mainline
-
-- **Allwinner H3**
-
-     - linux 3.4
-    
-     - linux mainline
+       - linux mainline
+     
+     - os
+      
+        - Ubuntu
+        
+        - debian
 
 - **Allwinner H5**
 
-     - linux 3.10 
+    - kernel 
+      
+       - linux 3.10.65
+     
+     - os
+      
+        - Ubuntu
+        
+        - debian
 
 - **Allwinner H6**
 
-     - linux 4.9
+    - kernel 
+      
+       - linux 4.9.118
     
-     - linux mainline
+       - linux mainline
+     
+     - os
+      
+        - Ubuntu
+        
+        - debian
