@@ -2,7 +2,7 @@
 
 build_image()
 {	
-	VER="v2.0.4"
+	VER="v2.0.5"
 	IMAGENAME="OrangePi_${BOARD}_${OS}_${DISTRO}_${IMAGETYPE}_${KERNEL_NAME}_${VER}"
 	IMAGE="${BUILD}/images/$IMAGENAME.img"
 
@@ -16,6 +16,8 @@ build_image()
 	part_position=20480   # KiB
 	boot_size=50          # MiB
 
+	[[ ${PLATFORM} == "OrangePiA64" ]] && uboot_position=19096
+
 	# Create beginning of disk
 	dd if=/dev/zero bs=1M count=$((part_position/1024)) of="$IMAGE"
 
@@ -24,30 +26,38 @@ build_image()
 	mkfs.vfat -n BOOT ${IMAGE}1
 	
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiH5" | "OrangePiH6_Linux4.9")
+		"OrangePiH3" | "OrangePiA64" | "OrangePiH5" | "OrangePiH6_Linux4.9")
 			boot0="${BUILD}/uboot/boot0_sdcard_${CHIP}.bin"
 			uboot="${BUILD}/uboot/u-boot-${CHIP}.bin"
 			dd if="${boot0}" conv=notrunc bs=1k seek=${boot0_position} of="${IMAGE}"
 			dd if="${uboot}" conv=notrunc bs=1k seek=${uboot_position} of="${IMAGE}"
 
-			cp -rfa ${BUILD}/kernel/uImage_${BOARD} ${BUILD}/kernel/uImage
-
 			if [ "${PLATFORM}" = "OrangePiH3" ]; then
+				cp -rfa ${BUILD}/kernel/uImage_${BOARD} ${BUILD}/kernel/uImage
 				cp -rfa ${EXTER}/script/script.bin_$BOARD $BUILD/script.bin
 				mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
 				mcopy -sm -i ${IMAGE}1 ${BUILD}/script.bin_${BOARD} :: || true
 			elif [ "${PLATFORM}" = "OrangePiH6_Linux4.9" ]; then
+				cp -rfa ${BUILD}/kernel/uImage_${BOARD} ${BUILD}/kernel/uImage
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/uboot/H6.dtb :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/initrd.img :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/orangepi"${BOARD}"/uEnv.txt :: || true
 			elif [ "${PLATFORM}" = "OrangePiH5" ]; then
+				cp -rfa ${BUILD}/kernel/uImage_${BOARD} ${BUILD}/kernel/uImage
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/uboot/H5.dtb :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/initrd.img :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/orangepi"${BOARD}"/uEnv.txt :: || true
+			elif [ "${PLATFORM}" = "OrangePiA64" ]; then
+				cp -rfa ${BUILD}/kernel/Image_${BOARD} ${BUILD}/kernel/Image
+			        mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/Image ::
+			        mcopy -m -i ${IMAGE}1 ${BUILD}/uboot/A64.dtb :: || true
+			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/initrd.img :: || true
+			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/orangepi"${BOARD}"/uEnv.txt :: || true
 			fi
 			;;
+
 		"OrangePiH3_mainline" | "OrangePiH6_mainline")
 			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/uInitrd ${BUILD}/uInitrd
 			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/orangepiEnv.txt ${BUILD}/orangepiEnv.txt
@@ -73,6 +83,7 @@ build_image()
 			mcopy -sm -i ${IMAGE}1 ${BUILD}/dtb :: || true
 			rm -rf ${BUILD}/dtb/overlay
 			;;
+
 		*)
 			echo -e "\e[1;31m Pls select correct platform \e[0m"
 			exit 0

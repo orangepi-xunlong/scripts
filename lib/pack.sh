@@ -21,12 +21,6 @@ function do_prepare()
 	${SYS_CONFIG}:${PACK_OUT}/sys_config.fex
 	)
 
-	# Cleanup
-	if [ -d $PACK_OUT ]; then
-		rm -rf ${PACK_OUT}
-	fi
-	mkdir -p ${PACK_OUT}
-
 	for file in ${configs_file_list[@]} ; do
 		cp -f $file ${PACK_OUT}/ 2> /dev/null
 	done
@@ -94,8 +88,8 @@ function do_common()
 		cp ${PACK_OUT}/sunxi.fex ${BUILD}/uboot/H5.dtb
 	fi
 
-        cp ${PACK_OUT}/boot0_sdcard.fex ${BUILD}/uboot/boot0_sdcard_${CHIP}.bin
-        cp ${PACK_OUT}/boot_package.fex ${BUILD}/uboot/u-boot-${CHIP}.bin
+        cp ${PACK_OUT}/boot0_sdcard.fex ${UBOOT_BIN}/boot0_sdcard_${CHIP}.bin
+        cp ${PACK_OUT}/boot_package.fex ${UBOOT_BIN}/u-boot-${CHIP}.bin
 
 	# Clear Space
 	rm ${BUILD}/sunxi.dtb
@@ -105,9 +99,55 @@ function do_common()
 	set -e
 }
 
+do_pack_a64()
+{
+	TOOLS_DIR="${EXTER}/chips/${CHIP}/pack/tools"
+	FILE="${EXTER}/chips/${CHIP}/pack/bin"
+
+	PATH=${TOOLS_DIR}:$PATH
+
+	cp -avf ${FILE}/* ${PACK_OUT}/
+	cp -avf $UBOOT/u-boot-sun50iw1p1.bin ${PACK_OUT}/u-boot.bin
+
+	cd ${PACK_OUT}
+
+	# Build binary device tree
+	dtc -Odtb -o A64.dtb A64.dts
+
+	# Build sys_config.bin
+	unix2dos sys_config.fex
+	script sys_config.fex
+
+	# Merge u-boot.bin infile outfile mode [secmonitor | secos | scp]
+	merge_uboot  u-boot.bin  bl31.bin  u-boot-merged.bin secmonitor
+	merge_uboot  u-boot-merged.bin  scp.bin  u-boot-merged2.bin scp
+
+	# Merge uboot and dtb
+	update_uboot_fdt u-boot-merged2.bin A64.dtb u-boot-with-dtb.bin
+
+	# Merge uboot and sys_config.fex
+	update_uboot u-boot-with-dtb.bin sys_config.bin
+
+        cp ${PACK_OUT}/boot0.bin ${UBOOT_BIN}/boot0_sdcard_${CHIP}.bin
+        cp ${PACK_OUT}/u-boot-with-dtb.bin ${UBOOT_BIN}/u-boot-${CHIP}.bin
+        cp ${PACK_OUT}/A64.dtb ${UBOOT_BIN}/
+
+	cd -
+}
+
 pack()
 {
-	do_prepare
-	do_ini_to_dts
-	do_common
+	# Cleanup
+	if [ -d $PACK_OUT ]; then
+		rm -rf ${PACK_OUT}
+	fi
+	mkdir -p ${PACK_OUT}
+
+	if [ ${PLATFORM} = "OrangePiA64" ];then
+		do_pack_a64
+	else
+		do_prepare
+		do_ini_to_dts
+		do_common
+	fi
 }

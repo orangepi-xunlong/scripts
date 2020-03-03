@@ -100,6 +100,7 @@ case "${PLATFORM}" in
 		CHIP="sun8iw7p1";
 		CHIP_BOARD="dolphin-p1"
 		;;
+
 	"OrangePiH5")
 	
 		OPTION=$(whiptail --title "Orange Pi Build System" \
@@ -128,6 +129,30 @@ case "${PLATFORM}" in
 		UBOOT_COMPILE=$ROOT/toolchain/gcc-linaro-4.9-2015.01-x86_64_aarch64-linux-gnu/gcc-linaro/bin/arm-linux-gnueabi-
 		KERNEL_NAME="linux3.10"
 		;;
+	
+	"OrangePiA64")
+	
+		OPTION=$(whiptail --title "Orange Pi Build System" \
+		        --menu "$MENUSTR" 15 60 5 --cancel-button Exit --ok-button Select \
+			"0"  "OrangePi Win" \
+		        3>&1 1>&2 2>&3)
+
+		case "${OPTION}" in 
+			"0") BOARD="win" ;;
+			*) 
+			echo -e "\e[1;31m Pls select correct board \e[0m"
+			exit 2 ;;
+		esac
+
+		ARCH="arm64"
+		CHIP="sun50iw1p1"
+		CHIP_BOARD="t1"
+		CHIP_FILE="${EXTER}"/chips/"${CHIP}"
+		TOOLS=$ROOT/toolchain/gcc-linaro-4.9-2015.01-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+		UBOOT_COMPILE=$ROOT/toolchain/gcc-linaro-4.9-2015.01-x86_64_aarch64-linux-gnu/gcc-linaro/bin/arm-linux-gnueabi-
+		KERNEL_NAME="linux3.10"
+		;;
+
 	"OrangePiH6" | "OrangePiH6_Linux4.9" | "OrangePiH6_mainline")
 	
 		OPTION=$(whiptail --title "Orange Pi Build System" \
@@ -178,10 +203,8 @@ OPTION=$(whiptail --title "OrangePi Build System" \
 	"1"   "Build Rootfs" \
 	"2"   "Build Uboot" \
 	"3"   "Build Linux" \
-	"4"   "Build Module only" \
-	"5"   "Update Kernel Image" \
-	"6"   "Update Module" \
-	"7"   "Update Uboot" \
+	"4"   "Update Kernel & Module " \
+	"5"   "Update Uboot" \
 	3>&1 1>&2 2>&3)
 
 case "${OPTION}" in 
@@ -208,15 +231,9 @@ case "${OPTION}" in
 		compile_kernel
 		;;
 	"4")
-		compile_module
-		;;
-	"5")
 		kernel_update
 		;;
-	"6")
-		modules_update
-		;;
-	"7")
+	"5")
 		uboot_check
 		uboot_update
 		;;

@@ -51,8 +51,8 @@ do_conffile() {
 	BOARD_FILE="$EXTER/chips/${CHIP}"
 	
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiH5" | "OrangePiH6_Linux4.9")
-	       	 	cp ${BOARD_FILE}/boot_emmc/* $DEST/opt/boot/ -f
+		"OrangePiH3" | "OrangePiH5" | "OrangePiA64" | "OrangePiH6_Linux4.9")
+	       	 	[[ -d ${BOARD_FILE}/boot_emmc ]] && cp ${BOARD_FILE}/boot_emmc/* $DEST/opt/boot/ -f
 	        	cp ${BOARD_FILE}/resize_rootfs.sh $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/install_to_emmc $DEST/usr/local/sbin/install_to_emmc -f
 	       	 	cp ${BOARD_FILE}/orangepi"${BOARD}"/sbin/* $DEST/usr/local/sbin/ -f
@@ -442,7 +442,7 @@ EOF
 #	add_opi_wallpaper
 
 	case ${BOARD} in 
-		"3" | "lite2" | "zeroplus2h5" | "prime")
+		"3" | "lite2" | "zeroplus2h5" | "prime" | "win")
 			add_bt_service
 			;;
 		*)
@@ -451,7 +451,7 @@ EOF
 
 	case ${BOARD} in 
 		"3" | "lite2" | "oneplus" | "pc2" | "prime" | "zeroplus" \
-	       	    | "zeroplus2h5")
+	       	    | "zeroplus2h5" | "win")
 			add_audio_service
 			;;
 		*)

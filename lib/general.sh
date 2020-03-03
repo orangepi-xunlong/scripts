@@ -92,6 +92,17 @@ prepare_host()
 	fi
 }
 
+modules_update()
+{
+
+	# Remove old modules
+	rm -rf $ROOTFS_PATH/lib/modules
+
+	cp -rfa $BUILD/lib/modules $ROOTFS_PATH/lib/
+
+	sync
+}
+
 kernel_update()
 {
 	
@@ -103,6 +114,31 @@ kernel_update()
 			rm -rf $BOOT_PATH/uImage
 			cp -rf $KERNEL_IMAGE $BOOT_PATH/uImage
 			;;
+
+		"OrangePiH5")
+			KERNEL_IMAGE=$BUILD/kernel/uImage_${BOARD}
+			DTB_IMAGE=$BUILD/uboot/A64.dtb
+
+			# Update kernel
+			rm -rf $BOOT_PATH/uImage
+			cp -rf $KERNEL_IMAGE $BOOT_PATH/uImage
+
+			rm -rf $BOOT_PATH/H5.dtb
+			cp -rf $DTB_IMAGE $BOOT_PATH/H5.dtb
+			;;
+
+		"OrangePiA64")
+			KERNEL_IMAGE=$BUILD/kernel/Image_${BOARD}
+			DTB_IMAGE=$BUILD/uboot/A64.dtb
+
+			# Update kernel
+			rm -rf $BOOT_PATH/Image
+			cp -rf $KERNEL_IMAGE $BOOT_PATH/Image
+
+			rm -rf $BOOT_PATH/A64.dtb
+			cp -rf $DTB_IMAGE $BOOT_PATH/A64.dtb
+			;;
+
 		"OrangePiH3_mainline")
 			KERNEL_IMAGE=$BUILD/kernel/zImage_${BOARD}
 
@@ -112,6 +148,7 @@ kernel_update()
 			cp -rf $KERNEL_IMAGE $BOOT_PATH/zImage
 			cp -rf $BUILD/dtb $BOOT_PATH/
 			;;
+
 		"OrangePiH6_mainline")
 			KERNEL_IMAGE=$BUILD/kernel/Image_${BOARD}
 
@@ -121,44 +158,32 @@ kernel_update()
 			cp -rf $KERNEL_IMAGE $BOOT_PATH/Image
 			cp -rf $BUILD/dtb/allwinner $BOOT_PATH/
 			;;
+
 		*)
 			;;
 	esac
 
-	sync
-	clear
-
-	whiptail --title "OrangePi Build System" --msgbox "Succeed to update kernel" 10 60
-}
-
-modules_update()
-{
-
-	# Remove old modules
-	rm -rf $ROOTFS_PATH/lib/modules
-
-	cp -rfa $BUILD/lib/modules $ROOTFS_PATH/lib/
-
-	sync
-	clear
-
-	whiptail --title "OrangePi Build System" --msgbox "Succeed to update Module" 10 40 0
+	modules_update
 }
 
 uboot_update()
 {
-	
+
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiH6" | "OrangePiH6_Linux4.9")
+		"OrangePiH3" | "OrangePiA64" | "OrangePiH6" | "OrangePiH5" | "OrangePiH6_Linux4.9")
 			boot0=$BUILD/uboot/boot0_sdcard_"${CHIP}".bin
 			uboot=$BUILD/uboot/u-boot-"${CHIP}".bin
+
+			uboot_position=16400
+			[[ ${PLATFORM} == "OrangePiA64" ]] && uboot_position=19096
 
 			# Clean TF partition
 			dd bs=1K seek=8 count=1015 if=/dev/zero of="$UBOOT_PATH"
 			# Update uboot
 			dd if=$boot0 of=$UBOOT_PATH conv=notrunc bs=1k seek=8
-			dd if=$uboot of=$UBOOT_PATH conv=notrunc bs=1k seek=16400
+			dd if=$uboot of=$UBOOT_PATH conv=notrunc bs=1k seek=${uboot_position}
 			;;
+
 		"OrangePiH3_mainline" | "OrangePiH6_mainline")
 			dd if=/dev/zero of=$UBOOT_PATH bs=1k seek=8 count=1015
 			uboot=$BUILD/uboot/u-boot-sunxi-with-spl.bin-${BOARD}

@@ -50,13 +50,22 @@ compile_uboot()
 			make spl CROSS_COMPILE="${UBOOT_COMPILE}" 
 			pack
 			;;
+			
+		"OrangePiA64")
+			if [ ! -f $UBOOT/u-boot-sun50iw1p1.bin ]; then
+			        make -C $UBOOT ARCH=arm CROSS_COMPILE=${UBOOT_COMPILE} ${CHIP}_config
+			fi
+			make -C $UBOOT ARCH=arm CROSS_COMPILE=${UBOOT_COMPILE}
+			pack
+			;;
+
 		"OrangePiH3_mainline" | "OrangePiH6_mainline")
 			cp ${EXTER}/chips/${CHIP}/mainline/bl31.bin ${UBOOT}/
 			make orangepi_"${BOARD}"_defconfig
 			make -j${CORES} ARCH=arm CROSS_COMPILE="${UBOOT_COMPILE}"
-
 			cp "$UBOOT"/u-boot-sunxi-with-spl.bin "$UBOOT_BIN"/u-boot-sunxi-with-spl.bin-"${BOARD}" -f
 			;;
+
 		*)
 	        	echo -e "\e[1;31m Pls select correct platform \e[0m"
 	        	exit 0
@@ -86,6 +95,7 @@ compile_kernel()
 			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS -j${CORES} uImage
 			cp $LINUX/arch/"${ARCH}"/boot/uImage $BUILD/kernel/uImage_$BOARD
 			;;
+
 		"OrangePiH5" | "OrangePiH6" | "OrangePiH6_Linux4.9")
 			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS "orangepi_${BOARD}"_defconfig
 			echo -e "\e[1;31m Using "orangepi_${BOARD}"_defconfig\e[0m"
@@ -94,6 +104,14 @@ compile_kernel()
 			mkimage -A arm -n "${PLATFORM}" -O linux -T kernel -C none -a 0x40080000 -e 0x40080000 \
 		                -d $LINUX/arch/"${ARCH}"/boot/Image "${BUILD}"/kernel/uImage_"${BOARD}"
 			;;
+			
+		"OrangePiA64")
+			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS "orangepi_${BOARD}"_defconfig
+			echo -e "\e[1;31m Using "orangepi_${BOARD}"_defconfig\e[0m"
+			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS -j${CORES} Image
+			cp $LINUX/arch/"${ARCH}"/boot/Image $BUILD/kernel/Image_$BOARD
+			;;
+
 		"OrangePiH3_mainline" | "OrangePiH6_mainline") 
 			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS "${CHIP}"smp_defconfig
 			echo -e "\e[1;31m Using "${CHIP}"smp_defconfig\e[0m"
