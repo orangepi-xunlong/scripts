@@ -16,7 +16,7 @@
      
      - os
       
-        - Ubuntu
+        - ubuntu
         
         - debian
 
@@ -28,7 +28,19 @@
      
      - os
       
-        - Ubuntu
+        - ubuntu
+        
+        - debian
+        
+- **Allwinner A64**
+
+    - kernel 
+      
+       - linux 3.10.102
+     
+     - os
+      
+        - ubuntu
         
         - debian
 
@@ -42,6 +54,6 @@
      
      - os
       
-        - Ubuntu
+        - ubuntu
         
         - debian
