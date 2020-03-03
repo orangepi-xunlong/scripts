@@ -106,31 +106,31 @@ do_pack_a64()
 
 	PATH=${TOOLS_DIR}:$PATH
 
-	cp -avf ${FILE}/* ${PACK_OUT}/
-	cp -avf $UBOOT/u-boot-sun50iw1p1.bin ${PACK_OUT}/u-boot.bin
+	cp -avf ${FILE}/* ${PACK_OUT}/ > /dev/null
+	cp -avf $UBOOT/u-boot-sun50iw1p1.bin ${PACK_OUT}/u-boot.bin > /dev/null
 
 	cd ${PACK_OUT}
 
 	# Build binary device tree
-	dtc -Odtb -o A64.dtb A64.dts
+	dtc -Odtb -o A64.dtb A64.dts 1>/dev/null 2>&1
 
 	# Build sys_config.bin
-	unix2dos sys_config.fex
-	script sys_config.fex
+	unix2dos sys_config.fex 1>/dev/null 2>&1
+	script sys_config.fex 1>/dev/null 2>&1
 
 	# Merge u-boot.bin infile outfile mode [secmonitor | secos | scp]
-	merge_uboot  u-boot.bin  bl31.bin  u-boot-merged.bin secmonitor
-	merge_uboot  u-boot-merged.bin  scp.bin  u-boot-merged2.bin scp
+	merge_uboot  u-boot.bin  bl31.bin  u-boot-merged.bin secmonitor 1>/dev/null 2>&1
+	merge_uboot  u-boot-merged.bin  scp.bin  u-boot-merged2.bin scp 1>/dev/null 2>&1
 
 	# Merge uboot and dtb
-	update_uboot_fdt u-boot-merged2.bin A64.dtb u-boot-with-dtb.bin
+	update_uboot_fdt u-boot-merged2.bin A64.dtb u-boot-with-dtb.bin 1>/dev/null 2>&1
 
 	# Merge uboot and sys_config.fex
-	update_uboot u-boot-with-dtb.bin sys_config.bin
+	update_uboot u-boot-with-dtb.bin sys_config.bin 1>/dev/null 2>&1
 
-        cp ${PACK_OUT}/boot0.bin ${UBOOT_BIN}/boot0_sdcard_${CHIP}.bin
-        cp ${PACK_OUT}/u-boot-with-dtb.bin ${UBOOT_BIN}/u-boot-${CHIP}.bin
-        cp ${PACK_OUT}/A64.dtb ${UBOOT_BIN}/
+        cp ${PACK_OUT}/boot0.bin ${UBOOT_BIN}/boot0_sdcard_${CHIP}.bin 1>/dev/null 2>&1
+        cp ${PACK_OUT}/u-boot-with-dtb.bin ${UBOOT_BIN}/u-boot-${CHIP}.bin 1>/dev/null 2>&1
+        cp ${PACK_OUT}/A64.dtb ${UBOOT_BIN}/ 1>/dev/null 2>&1
 
 	cd -
 }
