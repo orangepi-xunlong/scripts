@@ -263,7 +263,7 @@ prepare_env()
 					;;
 			esac
 			;;
-		stretch)
+		buster)
 			ROOTFS="${DISTRO}-base-${ARCH}.tar.gz"
 			METHOD="debootstrap"
 			case $SOURCES in
@@ -321,7 +321,7 @@ prepare_rootfs_server()
 		"xenial" | "bionic")
 			EXTRADEBS="software-properties-common libjpeg8-dev usbmount ubuntu-minimal ifupdown"
 			;;
-		"sid" | "stretch" | "stable")
+		"sid" | "buster" | "stable")
 			EXTRADEBS="sudo net-tools g++ libjpeg-dev" 
 			;;
 		*)	

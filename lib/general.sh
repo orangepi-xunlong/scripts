@@ -78,10 +78,10 @@ prepare_host()
 
 	echo "Install host tools"
 	apt-get -y --no-install-recommends --fix-missing install \
-		        bsdtar mtools u-boot-tools pv bc \
+		        libarchive-tools mtools u-boot-tools pv bc \
 		        gcc automake make binfmt-support flex \
 		        lib32z1 lib32z1-dev qemu-user-static bison \
-		        dosfstools libncurses5-dev lib32stdc++-5-dev debootstrap \
+		        dosfstools libncurses5-dev lib32stdc++-8-dev debootstrap \
 		        swig libpython2.7-dev libssl-dev python-minimal dos2unix  1>/dev/null 2>&1
 
 	# Prepare toolchains
@@ -207,7 +207,7 @@ select_distro()
                 "0"   "[$SOURCES]Change repository server" \
                 "1"   "Ubuntu Xenial" \
 		"2"   "Ubuntu Bionic(WIP)" \
-                "3"   "Debian Stretch" \
+                "3"   "Debian Buster" \
                 3>&1 1>&2 2>&3)
 
 		case "${OPTION}" in
@@ -225,7 +225,7 @@ select_distro()
 	                     	OS="ubuntu"
 				;;
 		 	"3")     
-	                	DISTRO="stretch"
+	                	DISTRO="buster"
 	                	OS="debian"
 				;;
 			*)
