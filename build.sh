@@ -23,6 +23,7 @@ UBOOT_PATH=""
 BUILD_KERNEL=""
 BUILD_MODULE=""
 
+VER="v2.0.6"
 SOURCES="CN"
 METHOD="download"
 KERNEL_NAME="linux"
@@ -30,7 +31,6 @@ UNTAR="bsdtar -xpf"
 PLATFORM="$(basename `pwd`)"
 BOOT_PATH="/media/$(logname)/BOOT"
 ROOTFS_PATH="/media/$(logname)/rootfs"
-
 CORES=$(nproc --ignore=1)
 
 if [[ "${EUID}" == 0 ]]; then
@@ -54,33 +54,60 @@ prepare_host
 MENUSTR="Welcome to Orange Pi Build System. Pls choose Platform."
 #################################################################
 case "${PLATFORM}" in 
+
+	"OrangePiH2" | "OrangePiH2_mainline")
+
+		OPTION=$(whiptail --title "Orange Pi Build System" \
+			--menu "${MENUSTR}" 20 80 10 --cancel-button Exit --ok-button Select \
+			"0"  "OrangePi R1" \
+			"1"  "OrangePi Zero" \
+			3>&1 1>&2 2>&3)
+
+		case "${OPTION}" in 
+			"0") BOARD="r1" ;;
+			"1") BOARD="zero" ;;
+			*)
+			echo -e "\e[1;31m Pls select correct board \e[0m"
+			exit 2 ;;
+		esac
+
+		if [ "${PLATFORM}" = "OrangePiH2" ]; then
+			TOOLS=$ROOT/toolchain/gcc-linaro-1.13.1-2012.02-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-
+			UBOOT_COMPILE="${TOOLS}"
+			KERNEL_NAME="linux3.4.113"
+		elif [ "${PLATFORM}" = "OrangePiH2_mainline" ]; then
+			TOOLS=$ROOT/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-
+			UBOOT_COMPILE="${TOOLS}"
+			KERNEL_NAME="linux5.3.5"
+		fi
+
+		ARCH="arm"
+		CHIP="sun8iw7p1";
+		;;
+
 	"OrangePiH3" | "OrangePiH3_mainline")
 
 		OPTION=$(whiptail --title "Orange Pi Build System" \
 			--menu "${MENUSTR}" 20 80 10 --cancel-button Exit --ok-button Select \
-			"0"  "OrangePi PC Plus" \
-			"1"  "OrangePi PC" \
-			"2"  "OrangePi Plus2E" \
+			"0"  "OrangePi 2" \
+			"1"  "OrangePi Pc" \
+			"2"  "OrangePi One" \
 			"3"  "OrangePi Lite" \
-			"4"  "OrangePi One" \
-			"5"  "OrangePi 2" \
-			"6"  "OrangePi ZeroPlus2 H3" \
-			"7"  "OrangePi Plus" \
-			"8"  "OrangePi Zero" \
-			"9"  "OrangePi R1" \
+			"4"  "OrangePi Plus"  \
+			"5"  "OrangePi Plus 2e" \
+			"6"  "OrangePi Pc Plus" \
+			"7"  "OrangePi Zero Plus 2" \
 			3>&1 1>&2 2>&3)
 
 		case "${OPTION}" in 
-			"0") BOARD="pc-plus" ;;
+			"0") BOARD="2" ;;
 			"1") BOARD="pc"	;;
-			"2") BOARD="plus2e" ;;
+			"2") BOARD="one" ;;
 			"3") BOARD="lite" ;;
-			"4") BOARD="one" ;;
-			"5") BOARD="2" ;;
-			"6") BOARD="zero_plus2_h3" ;;
-			"7") BOARD="plus" ;;
-			"8") BOARD="zero" ;;
-			"9") BOARD="r1" ;;
+			"4") BOARD="plus" ;;
+			"5") BOARD="plus2e" ;;
+			"6") BOARD="pcplus" ;;
+			"7") BOARD="zeroplus2h3" ;;
 			*)
 			echo -e "\e[1;31m Pls select correct board \e[0m"
 			exit 2 ;;
@@ -98,17 +125,16 @@ case "${PLATFORM}" in
 
 		ARCH="arm"
 		CHIP="sun8iw7p1";
-		CHIP_BOARD="dolphin-p1"
 		;;
 
 	"OrangePiH5")
 	
 		OPTION=$(whiptail --title "Orange Pi Build System" \
 		        --menu "$MENUSTR" 15 60 5 --cancel-button Exit --ok-button Select \
-			"0"  "OrangePi PC2" \
+			"0"  "OrangePi Pc 2" \
 			"1"  "OrangePi Prime" \
 			"2"  "OrangePi Zero Plus" \
-			"3"  "OrangePi Zero Plus2 H5" \
+			"3"  "OrangePi Zero Plus 2 " \
 		        3>&1 1>&2 2>&3)
 
 		case "${OPTION}" in 
@@ -158,16 +184,16 @@ case "${PLATFORM}" in
 		OPTION=$(whiptail --title "Orange Pi Build System" \
 		        --menu "$MENUSTR" 15 60 5 --cancel-button Exit --ok-button Select \
 		        "0"  "OrangePi 3" \
-		        "1"  "OrangePi Lite2" \
-		        "2"  "OrangePi OnePlus" \
-		        "3"  "OrangePi Zero2" \
+		        "1"  "OrangePi Lite 2" \
+		        "2"  "OrangePi One Plus" \
+		        "3"  "OrangePi Zero 2" \
 		        3>&1 1>&2 2>&3)
 
 		case "${OPTION}" in 
 			"0") BOARD="3" ;;
 			"1") BOARD="lite2" ;;
-			"2") BOARD="oneplus" ;;
-			"3") BOARD="zero2" ;;
+			"2") BOARD="zero2" ;;
+			"3") BOARD="oneplus" ;;
 			*) 
 			echo -e "\e[1;31m Pls select correct board \e[0m"
 			exit 2 ;;

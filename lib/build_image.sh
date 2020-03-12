@@ -2,7 +2,6 @@
 
 build_image()
 {	
-	VER="v2.0.5"
 	IMAGENAME="OrangePi_${BOARD}_${OS}_${DISTRO}_${IMAGETYPE}_${KERNEL_NAME}_${VER}"
 	IMAGE="${BUILD}/images/$IMAGENAME.img"
 
@@ -26,30 +25,33 @@ build_image()
 	mkfs.vfat -n BOOT ${IMAGE}1
 	
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiA64" | "OrangePiH5" | "OrangePiH6_Linux4.9")
-			boot0="${BUILD}/uboot/boot0_sdcard_${CHIP}.bin"
-			uboot="${BUILD}/uboot/u-boot-${CHIP}.bin"
+		"OrangePiH2" | "OrangePiH3" | "OrangePiA64" | "OrangePiH5" | "OrangePiH6" | "OrangePiH6_Linux4.9")
+
+			boot0="${UBOOT_BIN}/boot0_sdcard_${CHIP}.bin"
+			uboot="${UBOOT_BIN}/u-boot-${CHIP}.bin"
+
 			dd if="${boot0}" conv=notrunc bs=1k seek=${boot0_position} of="${IMAGE}"
 			dd if="${uboot}" conv=notrunc bs=1k seek=${uboot_position} of="${IMAGE}"
 
-			if [ "${PLATFORM}" = "OrangePiH3" ]; then
+			if [[ "${PLATFORM}" == "OrangePiH2" ]] || [[ "${PLATFORM}" == "OrangePiH3" ]]; then
 				cp -rfa ${BUILD}/kernel/uImage_${BOARD} ${BUILD}/kernel/uImage
-				cp -rfa ${EXTER}/script/script.bin_$BOARD $BUILD/script.bin
+				cp -rfa ${EXTER}/chips/${CHIP}/script/script.bin_$BOARD $BUILD/script.bin
 				mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
-				mcopy -sm -i ${IMAGE}1 ${BUILD}/script.bin_${BOARD} :: || true
-			elif [ "${PLATFORM}" = "OrangePiH6_Linux4.9" ]; then
+				mcopy -sm -i ${IMAGE}1 ${BUILD}/script.bin :: || true
+				rm -rf $BUILD/script.bin
+			elif [[ "${PLATFORM}" == "OrangePiH6_Linux4.9" ]]; then
 				cp -rfa ${BUILD}/kernel/uImage_${BOARD} ${BUILD}/kernel/uImage
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/uboot/H6.dtb :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/initrd.img :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/orangepi"${BOARD}"/uEnv.txt :: || true
-			elif [ "${PLATFORM}" = "OrangePiH5" ]; then
+			elif [[ "${PLATFORM}" == "OrangePiH5" ]]; then
 				cp -rfa ${BUILD}/kernel/uImage_${BOARD} ${BUILD}/kernel/uImage
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/uImage ::
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/uboot/H5.dtb :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/initrd.img :: || true
 			        mcopy -m -i ${IMAGE}1 ${EXTER}/chips/$CHIP/orangepi"${BOARD}"/uEnv.txt :: || true
-			elif [ "${PLATFORM}" = "OrangePiA64" ]; then
+			elif [[ "${PLATFORM}" == "OrangePiA64" ]]; then
 				cp -rfa ${BUILD}/kernel/Image_${BOARD} ${BUILD}/kernel/Image
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/Image ::
 			        mcopy -m -i ${IMAGE}1 ${BUILD}/uboot/A64.dtb :: || true
@@ -58,30 +60,30 @@ build_image()
 			fi
 			;;
 
-		"OrangePiH3_mainline" | "OrangePiH6_mainline")
-			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/uInitrd ${BUILD}/uInitrd
-			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/orangepiEnv.txt ${BUILD}/orangepiEnv.txt
+		"OrangePiH2_mainline" | "OrangePiH3_mainline" | "OrangePiH6_mainline")
+
+			mkdir -p ${BUILD}/tmp
+			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/uInitrd ${BUILD}/tmp/uInitrd
+			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/orangepiEnv.txt ${BUILD}/tmp/orangepiEnv.txt
 			mkimage -C none -A arm -T script -d ${EXTER}/chips/${CHIP}/mainline/boot_file/boot.cmd ${EXTER}/chips/${CHIP}/mainline/boot_file/boot.scr
-			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/boot.* ${BUILD}/
+			cp -fa ${EXTER}/chips/${CHIP}/mainline/boot_file/boot.* ${BUILD}/tmp/
 	
 			uboot="${BUILD}/uboot/u-boot-sunxi-with-spl.bin-${BOARD}"
 			dd if="$uboot" conv=notrunc bs=1k seek=$boot0_position of="$IMAGE"
 
-			if [ ${PLATFORM} = "OrangePiH6_mainline" ];then
+			if [[ ${PLATFORM} == "OrangePiH6_mainline" ]];then
 				cp -fa ${BUILD}/kernel/Image_${BOARD} ${BUILD}/kernel/Image
 				mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/Image ::
-			elif [ ${PLATFORM}= "OrangePiH3_mainline" ];then 
+			elif [[ ${PLATFORM} == "OrangePiH2_mainline" ]] || [[ "${PLATFORM}" == "OrangePiH3_mainline" ]];then 
 				cp -fa ${BUILD}/kernel/zImage_${BOARD} ${BUILD}/kernel/zImage
-				cp -rfa ${EXTER}/chips/${CHIP}/mainline/boot_file/overlay ${BUILD}/dtb/
 				mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/zImage ::
 			fi
 
-			mcopy -m -i ${IMAGE}1 ${BUILD}/uInitrd :: || true
-			mcopy -m -i ${IMAGE}1 ${BUILD}/orangepiEnv.txt :: || true
-			mcopy -m -i ${IMAGE}1 ${BUILD}/boot.* :: || true
+			mcopy -m -i ${IMAGE}1 ${BUILD}/tmp/uInitrd :: || true
+			mcopy -m -i ${IMAGE}1 ${BUILD}/tmp/orangepiEnv.txt :: || true
+			mcopy -m -i ${IMAGE}1 ${BUILD}/tmp/boot.* :: || true
 			mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/System.map-${BOARD} :: || true
 			mcopy -sm -i ${IMAGE}1 ${BUILD}/dtb :: || true
-			rm -rf ${BUILD}/dtb/overlay
 			;;
 
 		*)

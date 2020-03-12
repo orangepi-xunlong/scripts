@@ -22,7 +22,7 @@ compile_uboot()
 	echo -e "\e[1;31m Build U-boot \e[0m"
 
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiH5" | "OrangePiH6" | "OrangePiH6_Linux4.9")
+		"OrangePiH2" | "OrangePiH3" | "OrangePiH5" | "OrangePiH6" | "OrangePiH6_Linux4.9")
 			make "${CHIP}"_config 
 
 			case "${BOARD}" in 
@@ -59,8 +59,8 @@ compile_uboot()
 			pack
 			;;
 
-		"OrangePiH3_mainline" | "OrangePiH6_mainline")
-			cp ${EXTER}/chips/${CHIP}/mainline/bl31.bin ${UBOOT}/
+		"OrangePiH2_mainline" | "OrangePiH3_mainline" | "OrangePiH6_mainline")
+			[[ ${PLATFORM} == "OrangePiH6_mainline" ]] && cp ${EXTER}/chips/${CHIP}/mainline/bl31.bin ${UBOOT}/
 			make orangepi_"${BOARD}"_defconfig
 			make -j${CORES} ARCH=arm CROSS_COMPILE="${UBOOT_COMPILE}"
 			cp "$UBOOT"/u-boot-sunxi-with-spl.bin "$UBOOT_BIN"/u-boot-sunxi-with-spl.bin-"${BOARD}" -f
@@ -89,7 +89,7 @@ compile_kernel()
 	echo -e "\e[1;31m Start compiling the kernel ...\e[0m"
 
 	case "${PLATFORM}" in 
-		"OrangePiH3")
+		"OrangePiH2" | "OrangePiH3")
 			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS "orangepi_${BOARD}"_defconfig
 			echo -e "\e[1;31m Using "orangepi_${BOARD}"_defconfig\e[0m"
 			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS -j${CORES} uImage
@@ -112,7 +112,7 @@ compile_kernel()
 			cp $LINUX/arch/"${ARCH}"/boot/Image $BUILD/kernel/Image_$BOARD
 			;;
 
-		"OrangePiH3_mainline" | "OrangePiH6_mainline") 
+		"OrangePiH2_mainline" | "OrangePiH3_mainline" | "OrangePiH6_mainline") 
 			make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS "${CHIP}"smp_defconfig
 			echo -e "\e[1;31m Using "${CHIP}"smp_defconfig\e[0m"
 
@@ -128,7 +128,7 @@ compile_kernel()
 			# copy dtbs
 			echo -e "\e[1;31m Start Copy dtbs \e[0m"
 
-			if [ ${PLATFORM} = "OrangePiH3_mainline" ];then
+			if [[ ${PLATFORM} == "OrangePiH3_mainline" ]] || [[ ${PLATFORM} == "OrangePiH2_mainline" ]];then
        				cp $LINUX/arch/"${ARCH}"/boot/dts/sun8i-h3-orangepi*.dtb $BUILD/dtb/
        				cp $LINUX/arch/"${ARCH}"/boot/dts/sun8i-h2-plus-orangepi-*.dtb $BUILD/dtb/
 				cp $LINUX/arch/"${ARCH}"/boot/zImage $BUILD/kernel/zImage_$BOARD

@@ -107,7 +107,7 @@ kernel_update()
 {
 	
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiH6" | "OrangePiH6_Linux4.9")
+		"OrangePiH2" | "OrangePiH3" | "OrangePiH6" | "OrangePiH6_Linux4.9")
 			KERNEL_IMAGE=$BUILD/kernel/uImage_${BOARD}
 
 			# Update kernel
@@ -117,7 +117,6 @@ kernel_update()
 
 		"OrangePiH5")
 			KERNEL_IMAGE=$BUILD/kernel/uImage_${BOARD}
-			DTB_IMAGE=$BUILD/uboot/A64.dtb
 
 			# Update kernel
 			rm -rf $BOOT_PATH/uImage
@@ -129,7 +128,6 @@ kernel_update()
 
 		"OrangePiA64")
 			KERNEL_IMAGE=$BUILD/kernel/Image_${BOARD}
-			DTB_IMAGE=$BUILD/uboot/A64.dtb
 
 			# Update kernel
 			rm -rf $BOOT_PATH/Image
@@ -139,7 +137,7 @@ kernel_update()
 			cp -rf $DTB_IMAGE $BOOT_PATH/A64.dtb
 			;;
 
-		"OrangePiH3_mainline")
+		"OrangePiH2_mainline" | "OrangePiH3_mainline")
 			KERNEL_IMAGE=$BUILD/kernel/zImage_${BOARD}
 
 			# Update kernel
@@ -170,7 +168,8 @@ uboot_update()
 {
 
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiA64" | "OrangePiH6" | "OrangePiH5" | "OrangePiH6_Linux4.9")
+		"OrangePiH2" | "OrangePiH3" | "OrangePiA64" | "OrangePiH5" | "OrangePiH6" | "OrangePiH6_Linux4.9")
+
 			boot0=$BUILD/uboot/boot0_sdcard_"${CHIP}".bin
 			uboot=$BUILD/uboot/u-boot-"${CHIP}".bin
 
@@ -178,17 +177,21 @@ uboot_update()
 			[[ ${PLATFORM} == "OrangePiA64" ]] && uboot_position=19096
 
 			# Clean TF partition
-			dd bs=1K seek=8 count=1015 if=/dev/zero of="$UBOOT_PATH"
+			dd bs=1k seek=8 count=20000 if=/dev/zero of="$UBOOT_PATH"
+			
 			# Update uboot
 			dd if=$boot0 of=$UBOOT_PATH conv=notrunc bs=1k seek=8
 			dd if=$uboot of=$UBOOT_PATH conv=notrunc bs=1k seek=${uboot_position}
 			;;
 
-		"OrangePiH3_mainline" | "OrangePiH6_mainline")
-			dd if=/dev/zero of=$UBOOT_PATH bs=1k seek=8 count=1015
+		"OrangePiH2_mainline" | "OrangePiH3_mainline" | "OrangePiH6_mainline")
+			
 			uboot=$BUILD/uboot/u-boot-sunxi-with-spl.bin-${BOARD}
+
+			dd if=/dev/zero of=$UBOOT_PATH bs=1k seek=8 count=20000
 			dd if=$uboot of=$UBOOT_PATH conv=notrunc bs=1k seek=8
 			;;
+
 		*)
 			;;
 	esac

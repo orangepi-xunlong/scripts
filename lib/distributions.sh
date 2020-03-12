@@ -51,17 +51,17 @@ do_conffile() {
 	BOARD_FILE="$EXTER/chips/${CHIP}"
 	
 	case "${PLATFORM}" in
-		"OrangePiH3" | "OrangePiH5" | "OrangePiA64" | "OrangePiH6_Linux4.9")
+		"OrangePiH2" | "OrangePiH3" | "OrangePiH5" | "OrangePiA64" | "OrangePiH6_Linux4.9")
 	       	 	[[ -d ${BOARD_FILE}/boot_emmc ]] && cp ${BOARD_FILE}/boot_emmc/* $DEST/opt/boot/ -f
 	        	cp ${BOARD_FILE}/resize_rootfs.sh $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/install_to_emmc $DEST/usr/local/sbin/install_to_emmc -f
 	       	 	cp ${BOARD_FILE}/orangepi"${BOARD}"/sbin/* $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/orangepi"${BOARD}"/modules.conf $DEST/etc/modules-load.d/ -f
 			;;
-		"OrangePiH3_mainline" | "OrangePiH6_mainline")
+		"OrangePiH2_mainline" | "OrangePiH3_mainline" | "OrangePiH6_mainline")
 			cp $BUILD/uboot/u-boot-sunxi-with-spl.bin-${BOARD} $DEST/opt/boot/u-boot-sunxi-with-spl.bin -f
 	       	 	cp ${BOARD_FILE}/mainline/install_to_emmc_$OS $DEST/usr/local/sbin/install_to_emmc -f
-	        	cp ${BOARD_FILE}/resize_rootfs.sh $DEST/usr/local/sbin/ -f
+	        	cp ${EXTER}/common/mainline/resize_rootfs.sh $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/mainline/orangepi"${BOARD}"/sbin/* $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/mainline/orangepi"${BOARD}"/modules.conf $DEST/etc/modules-load.d/ -f
 			;;
@@ -253,8 +253,8 @@ prepare_env()
 				        ;;
 				"CN")
 				        #SOURCES="http://mirrors.aliyun.com/ubuntu-ports"
-		                        SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
-				        #SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
+		                        #SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
+				        SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
 					ROOTFS="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
 				*)
@@ -439,20 +439,11 @@ EOF
 	add_ssh_keygen_service
 	add_opi_python_gpio_libs
 	add_opi_config_libs
-#	add_opi_wallpaper
+	add_audio_service
 
 	case ${BOARD} in 
-		"3" | "lite2" | "zeroplus2h5" | "prime" | "win")
+		"3" | "lite2" | "zeroplus2h5" | "zeroplus2h3" | "prime" | "win")
 			add_bt_service
-			;;
-		*)
-			;;
-	esac
-
-	case ${BOARD} in 
-		"3" | "lite2" | "oneplus" | "pc2" | "prime" | "zeroplus" \
-	       	    | "zeroplus2h5" | "win")
-			add_audio_service
 			;;
 		*)
 			;;
