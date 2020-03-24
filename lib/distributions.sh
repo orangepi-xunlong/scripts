@@ -142,8 +142,6 @@ add_opi_python_gpio_libs() {
         cat > "$DEST/install_opi_gpio" <<EOF
 #!/bin/bash
 
-apt remove -y blueman
-apt-get install -y python3-pip python3-setuptools
 cd /usr/local/sbin/OPi.GPIO
 python3 setup.py install
 EOF
@@ -155,7 +153,6 @@ EOF
 }
 
 add_opi_config_libs() {
-	do_chroot apt-get install -y dialog expect bc cpufrequtils figlet toilet
         cp $EXTER/common/opi_config_libs $DEST/usr/local/sbin/ -rfa
         cp $EXTER/common/opi_config_libs/opi-config $DEST/usr/local/sbin/ -rfa
 
@@ -245,16 +242,16 @@ prepare_env()
 	trap cleanup EXIT
 
 	case $DISTRO in
-		xenial | bionic)
+		"xenial" | "bionic")
 			case $SOURCES in
 				"CDN"|"OFCL")
 			       	        SOURCES="http://ports.ubuntu.com"
 					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
 				"CN")
-				        #SOURCES="http://mirrors.aliyun.com/ubuntu-ports"
+				        SOURCES="http://mirrors.aliyun.com/ubuntu-ports"
 		                        #SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
-				        SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
+					#SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
 					ROOTFS="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
 				*)
@@ -263,7 +260,7 @@ prepare_env()
 					;;
 			esac
 			;;
-		stretch)
+		"stretch" | "buster")
 			ROOTFS="${DISTRO}-base-${ARCH}.tar.gz"
 			METHOD="debootstrap"
 			case $SOURCES in
@@ -318,12 +315,15 @@ prepare_rootfs_server()
 	add_${OS}_apt_sources $DISTRO
 
 	case "${DISTRO}" in
+
 		"xenial" | "bionic")
 			EXTRADEBS="software-properties-common libjpeg8-dev usbmount ubuntu-minimal ifupdown"
 			;;
-		"sid" | "stretch" | "stable")
+			
+		"stretch" | "buster")
 			EXTRADEBS="sudo net-tools g++ libjpeg-dev" 
 			;;
+
 		*)	
 			echo "Unknown DISTRO=$DISTRO"
 			exit 2
@@ -336,7 +336,7 @@ export DEBIAN_FRONTEND=noninteractive
 locale-gen en_US.UTF-8
 
 apt-get -y update
-apt-get -y install dosfstools curl xz-utils iw rfkill wireless-tools wpasupplicant openssh-server alsa-utils rsync u-boot-tools vim parted network-manager git autoconf gcc libtool libsysfs-dev pkg-config libdrm-dev xutils-dev hostapd dnsmasq apt-transport-https man subversion imagemagick libv4l-dev cmake bluez $EXTRADEBS
+apt-get -y --no-install-recommends install dosfstools curl xz-utils iw rfkill wireless-tools wpasupplicant openssh-server alsa-utils rsync u-boot-tools vim parted network-manager git autoconf gcc libtool libsysfs-dev pkg-config libdrm-dev xutils-dev hostapd dnsmasq apt-transport-https man subversion imagemagick libv4l-dev cmake bluez python3-pip python3-setuptools dialog expect bc cpufrequtils figlet toilet lsb-core $EXTRADEBS
 
 apt-get install -f
 apt-get -y remove --purge ureadahead

@@ -84,6 +84,7 @@ build_image()
 			mcopy -m -i ${IMAGE}1 ${BUILD}/tmp/boot.* :: || true
 			mcopy -m -i ${IMAGE}1 ${BUILD}/kernel/System.map-${BOARD} :: || true
 			mcopy -sm -i ${IMAGE}1 ${BUILD}/dtb :: || true
+			rm -rf ${BUILD}/tmp
 			;;
 
 		*)
