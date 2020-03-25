@@ -51,6 +51,7 @@ do_conffile() {
 	BOARD_FILE="$EXTER/chips/${CHIP}"
 	
 	case "${PLATFORM}" in
+		
 		"OrangePiH2" | "OrangePiH3" | "OrangePiH5" | "OrangePiA64" | "OrangePiH6_Linux4.9")
 	       	 	[[ -d ${BOARD_FILE}/boot_emmc ]] && cp ${BOARD_FILE}/boot_emmc/* $DEST/opt/boot/ -f
 	        	cp ${BOARD_FILE}/resize_rootfs.sh $DEST/usr/local/sbin/ -f
@@ -58,13 +59,16 @@ do_conffile() {
 	       	 	cp ${BOARD_FILE}/orangepi"${BOARD}"/sbin/* $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/orangepi"${BOARD}"/modules.conf $DEST/etc/modules-load.d/ -f
 			;;
+			
 		"OrangePiH2_mainline" | "OrangePiH3_mainline" | "OrangePiH6_mainline")
+	       	 	[[ -d ${BOARD_FILE}/mainline/boot_emmc ]] && cp ${BOARD_FILE}/mainline/boot_emmc/* $DEST/opt/boot/ -f
 			cp $BUILD/uboot/u-boot-sunxi-with-spl.bin-${BOARD} $DEST/opt/boot/u-boot-sunxi-with-spl.bin -f
 	       	 	cp ${BOARD_FILE}/mainline/install_to_emmc_$OS $DEST/usr/local/sbin/install_to_emmc -f
 	        	cp ${EXTER}/common/mainline/resize_rootfs.sh $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/mainline/orangepi"${BOARD}"/sbin/* $DEST/usr/local/sbin/ -f
 	       	 	cp ${BOARD_FILE}/mainline/orangepi"${BOARD}"/modules.conf $DEST/etc/modules-load.d/ -f
 			;;
+
 		*)	
 		        echo -e "\e[1;31m Pls select correct platform \e[0m"
 		        exit 0
@@ -244,14 +248,20 @@ prepare_env()
 	case $DISTRO in
 		"xenial" | "bionic")
 			case $SOURCES in
-				"CDN"|"OFCL")
+				"OFCL")
 			       	        SOURCES="http://ports.ubuntu.com"
 					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
-				"CN")
+				"ALIYUN")
 				        SOURCES="http://mirrors.aliyun.com/ubuntu-ports"
-		                        #SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
-					#SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
+					ROOTFS="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
+				        ;;
+				"USTC")
+					SOURCES="http://mirrors.ustc.edu.cn/ubuntu-ports"
+					ROOTFS="https://mirrors.ustc.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
+				        ;;
+				"TSINGHUA")
+		                        SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
 					ROOTFS="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
 				*)
@@ -263,15 +273,22 @@ prepare_env()
 		"stretch" | "buster")
 			ROOTFS="${DISTRO}-base-${ARCH}.tar.gz"
 			METHOD="debootstrap"
+
 			case $SOURCES in
-		                "CDN")
-		                        SOURCES="http://httpredir.debian.org/debian"
-		                        ;;
 		                "OFCL")
 		                        SOURCES="http://ftp.debian.org/debian"
 		                        ;;
-		                "CN")
-		                        SOURCES="http://ftp.cn.debian.org/debian"
+
+				"ALIYUN")
+					SOURCES="http://mirrors.aliyun.com/debian"
+					;;
+
+				"USTC")
+		                        SOURCES="http://mirrors.ustc.edu.cn/debian"
+					;;
+
+			       	"TSINGHUA")
+		                        SOURCES="https://mirrors.tuna.tsinghua.edu.cn/debian"
 		                        ;;
 				*)
 					SOURCES="http://httpredir.debian.org/debian"
@@ -374,9 +391,7 @@ prepare_rootfs_desktop()
 apt-get update
 apt-get -y install xubuntu-desktop
 
-apt-get install -f
 apt-get -y autoremove
-apt-get clean
 EOF
 		else
 	cat > "$DEST/type-phase" <<EOF
@@ -384,9 +399,7 @@ EOF
 apt-get update
 apt-get -y install lubuntu-desktop
 
-apt-get install -f
 apt-get -y autoremove
-apt-get clean
 EOF
 		fi
 	else
@@ -397,7 +410,6 @@ apt-get update
 apt-get -y install xorg xfce4 xfce4-goodies vlc network-manager-gnome
 
 apt-get -y autoremove
-apt-get clean
 EOF
 	fi
 
@@ -475,7 +487,7 @@ EOF
 	# Install Kernel headers
 	make -C $LINUX ARCH="${ARCH}" CROSS_COMPILE=$TOOLS headers_install INSTALL_HDR_PATH="$DEST/usr/local"
 
-	cp $EXTER/common/firmware $DEST/lib/ -rf
+	cp $EXTER/common/firmware $DEST/lib/ -rfa
 }
 
 build_rootfs()

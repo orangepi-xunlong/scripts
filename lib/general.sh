@@ -257,10 +257,11 @@ select_distro()
 select_sources()
 {
 	SOURCES=$(whiptail --title "Repository Server" --nocancel --radiolist \
-		"What is the repository server of your choice?" 20 60 5 \
-	       	"CN" "The server from China." ON \
-		"CDN" "Deafult CDN repository server(RCMD)." OFF \
-		"OFCL" "Official repository server." OFF 3>&1 1>&2 2>&3)
+		"What is the repository server of your choice?" 15 80 5 \
+		"TSINGHUA" "The server from China (mirrors.tuna.tsinghua.edu.cn)" ON \
+		"OFCL" "Official repository server (ports.ubuntu.com)" OFF \
+		"ALIYUN" "The server from China (mirrors.aliyun.com)" OFF \
+		"USTC" "The server from China (mirrors.ustc.edu.cn)" OFF 3>&1 1>&2 2>&3)
 
 	exitstatus=$?
 
