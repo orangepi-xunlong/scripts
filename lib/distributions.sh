@@ -264,6 +264,10 @@ prepare_env()
 		                        SOURCES="http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
 					ROOTFS="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
 				        ;;
+				"HUAWEI")
+		                        SOURCES="http://mirrors.huaweicloud.com/ubuntu-ports"
+					ROOTFS="https://mirrors.huaweicloud.com/ubuntu-cdimage/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
+				        ;;
 				*)
 					SOURCES="http://ports.ubuntu.com"
 					ROOTFS="http://cdimage.ubuntu.com/ubuntu-base/releases/${DISTRO}/release/ubuntu-base-${DISTRO_NUM}-base-${ROOTFS_ARCH}.tar.gz"
@@ -290,6 +294,9 @@ prepare_env()
 			       	"TSINGHUA")
 		                        SOURCES="https://mirrors.tuna.tsinghua.edu.cn/debian"
 		                        ;;
+			       	"HUAWEI")
+		                        SOURCES="https://mirrors.huaweicloud.com/debian"
+					;;
 				*)
 					SOURCES="http://httpredir.debian.org/debian"
 		                        ;;

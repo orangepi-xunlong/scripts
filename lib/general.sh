@@ -261,6 +261,7 @@ select_sources()
 		"TSINGHUA" "The server from China (mirrors.tuna.tsinghua.edu.cn)" ON \
 		"OFCL" "Official repository server (ports.ubuntu.com)" OFF \
 		"ALIYUN" "The server from China (mirrors.aliyun.com)" OFF \
+		"HUAWEI" "The server from China (mirrors.huaweicloud.com)" OFF \
 		"USTC" "The server from China (mirrors.ustc.edu.cn)" OFF 3>&1 1>&2 2>&3)
 
 	exitstatus=$?
